@@ -7,12 +7,13 @@ import { getFirestore, type Firestore } from "firebase/firestore";
 // These values are PUBLISHABLE — safe to commit. Firestore security rules
 // and Firebase Auth enforce access control, not these keys.
 const firebaseConfig = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  storageBucket: "REPLACE_ME.appspot.com",
-  messagingSenderId: "REPLACE_ME",
-  appId: "REPLACE_ME",
+  apiKey: "AIzaSyCJK5Tb4Ad_WjjxxH0R9AJ5pYVpS_Yhvh0",
+  authDomain: "comepassdatabase.firebaseapp.com",
+  projectId: "comepassdatabase",
+  storageBucket: "comepassdatabase.firebasestorage.app",
+  messagingSenderId: "981580546729",
+  appId: "1:981580546729:web:fd0bf5ee8c29bf539f5fb8",
+  measurementId: "G-CH3MJ0CGHC",
 };
 
 export const isFirebaseConfigured = firebaseConfig.apiKey !== "REPLACE_ME";
