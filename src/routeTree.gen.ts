@@ -17,6 +17,11 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedStudentIndexRouteImport } from './routes/_authenticated/student/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminQuestionsRouteImport } from './routes/_authenticated/admin/questions'
+import { Route as AuthenticatedAdminExamsRouteImport } from './routes/_authenticated/admin/exams'
+import { Route as AuthenticatedStudentExamSessionIdRouteImport } from './routes/_authenticated/student/exam.$sessionId'
+import { Route as AuthenticatedAdminExamsSessionIdRouteImport } from './routes/_authenticated/admin/exams.$sessionId'
+import { Route as AuthenticatedStudentExamSessionIdResultRouteImport } from './routes/_authenticated/student/exam.$sessionId.result'
 
 const VerifyEmailRoute = VerifyEmailRouteImport.update({
   id: '/verify-email',
@@ -58,6 +63,35 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminQuestionsRoute =
+  AuthenticatedAdminQuestionsRouteImport.update({
+    id: '/admin/questions',
+    path: '/admin/questions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminExamsRoute = AuthenticatedAdminExamsRouteImport.update({
+  id: '/admin/exams',
+  path: '/admin/exams',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStudentExamSessionIdRoute =
+  AuthenticatedStudentExamSessionIdRouteImport.update({
+    id: '/student/exam/$sessionId',
+    path: '/student/exam/$sessionId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminExamsSessionIdRoute =
+  AuthenticatedAdminExamsSessionIdRouteImport.update({
+    id: '/$sessionId',
+    path: '/$sessionId',
+    getParentRoute: () => AuthenticatedAdminExamsRoute,
+  } as any)
+const AuthenticatedStudentExamSessionIdResultRoute =
+  AuthenticatedStudentExamSessionIdResultRouteImport.update({
+    id: '/result',
+    path: '/result',
+    getParentRoute: () => AuthenticatedStudentExamSessionIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,8 +99,13 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/student/': typeof AuthenticatedStudentIndexRoute
+  '/admin/exams/$sessionId': typeof AuthenticatedAdminExamsSessionIdRoute
+  '/student/exam/$sessionId': typeof AuthenticatedStudentExamSessionIdRouteWithChildren
+  '/student/exam/$sessionId/result': typeof AuthenticatedStudentExamSessionIdResultRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -74,8 +113,13 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/student': typeof AuthenticatedStudentIndexRoute
+  '/admin/exams/$sessionId': typeof AuthenticatedAdminExamsSessionIdRoute
+  '/student/exam/$sessionId': typeof AuthenticatedStudentExamSessionIdRouteWithChildren
+  '/student/exam/$sessionId/result': typeof AuthenticatedStudentExamSessionIdResultRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -85,8 +129,13 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/_authenticated/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/_authenticated/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
+  '/_authenticated/admin/exams/$sessionId': typeof AuthenticatedAdminExamsSessionIdRoute
+  '/_authenticated/student/exam/$sessionId': typeof AuthenticatedStudentExamSessionIdRouteWithChildren
+  '/_authenticated/student/exam/$sessionId/result': typeof AuthenticatedStudentExamSessionIdResultRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,8 +145,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/verify-email'
+    | '/admin/exams'
+    | '/admin/questions'
     | '/admin/'
     | '/student/'
+    | '/admin/exams/$sessionId'
+    | '/student/exam/$sessionId'
+    | '/student/exam/$sessionId/result'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -105,8 +159,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/verify-email'
+    | '/admin/exams'
+    | '/admin/questions'
     | '/admin'
     | '/student'
+    | '/admin/exams/$sessionId'
+    | '/student/exam/$sessionId'
+    | '/student/exam/$sessionId/result'
   id:
     | '__root__'
     | '/'
@@ -115,8 +174,13 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/verify-email'
+    | '/_authenticated/admin/exams'
+    | '/_authenticated/admin/questions'
     | '/_authenticated/admin/'
     | '/_authenticated/student/'
+    | '/_authenticated/admin/exams/$sessionId'
+    | '/_authenticated/student/exam/$sessionId'
+    | '/_authenticated/student/exam/$sessionId/result'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -186,17 +250,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/questions': {
+      id: '/_authenticated/admin/questions'
+      path: '/admin/questions'
+      fullPath: '/admin/questions'
+      preLoaderRoute: typeof AuthenticatedAdminQuestionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/exams': {
+      id: '/_authenticated/admin/exams'
+      path: '/admin/exams'
+      fullPath: '/admin/exams'
+      preLoaderRoute: typeof AuthenticatedAdminExamsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/student/exam/$sessionId': {
+      id: '/_authenticated/student/exam/$sessionId'
+      path: '/student/exam/$sessionId'
+      fullPath: '/student/exam/$sessionId'
+      preLoaderRoute: typeof AuthenticatedStudentExamSessionIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/exams/$sessionId': {
+      id: '/_authenticated/admin/exams/$sessionId'
+      path: '/$sessionId'
+      fullPath: '/admin/exams/$sessionId'
+      preLoaderRoute: typeof AuthenticatedAdminExamsSessionIdRouteImport
+      parentRoute: typeof AuthenticatedAdminExamsRoute
+    }
+    '/_authenticated/student/exam/$sessionId/result': {
+      id: '/_authenticated/student/exam/$sessionId/result'
+      path: '/result'
+      fullPath: '/student/exam/$sessionId/result'
+      preLoaderRoute: typeof AuthenticatedStudentExamSessionIdResultRouteImport
+      parentRoute: typeof AuthenticatedStudentExamSessionIdRoute
+    }
   }
 }
 
+interface AuthenticatedAdminExamsRouteChildren {
+  AuthenticatedAdminExamsSessionIdRoute: typeof AuthenticatedAdminExamsSessionIdRoute
+}
+
+const AuthenticatedAdminExamsRouteChildren: AuthenticatedAdminExamsRouteChildren =
+  {
+    AuthenticatedAdminExamsSessionIdRoute:
+      AuthenticatedAdminExamsSessionIdRoute,
+  }
+
+const AuthenticatedAdminExamsRouteWithChildren =
+  AuthenticatedAdminExamsRoute._addFileChildren(
+    AuthenticatedAdminExamsRouteChildren,
+  )
+
+interface AuthenticatedStudentExamSessionIdRouteChildren {
+  AuthenticatedStudentExamSessionIdResultRoute: typeof AuthenticatedStudentExamSessionIdResultRoute
+}
+
+const AuthenticatedStudentExamSessionIdRouteChildren: AuthenticatedStudentExamSessionIdRouteChildren =
+  {
+    AuthenticatedStudentExamSessionIdResultRoute:
+      AuthenticatedStudentExamSessionIdResultRoute,
+  }
+
+const AuthenticatedStudentExamSessionIdRouteWithChildren =
+  AuthenticatedStudentExamSessionIdRoute._addFileChildren(
+    AuthenticatedStudentExamSessionIdRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
+  AuthenticatedAdminExamsRoute: typeof AuthenticatedAdminExamsRouteWithChildren
+  AuthenticatedAdminQuestionsRoute: typeof AuthenticatedAdminQuestionsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedStudentIndexRoute: typeof AuthenticatedStudentIndexRoute
+  AuthenticatedStudentExamSessionIdRoute: typeof AuthenticatedStudentExamSessionIdRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminExamsRoute: AuthenticatedAdminExamsRouteWithChildren,
+  AuthenticatedAdminQuestionsRoute: AuthenticatedAdminQuestionsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedStudentIndexRoute: AuthenticatedStudentIndexRoute,
+  AuthenticatedStudentExamSessionIdRoute:
+    AuthenticatedStudentExamSessionIdRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
