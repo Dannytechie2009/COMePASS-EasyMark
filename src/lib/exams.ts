@@ -14,14 +14,20 @@ export interface Question {
 }
 
 export type ExamStatus = "scheduled" | "live" | "ended" | "corrections_open";
+export type ExamMode = "single" | "combo";
+
+export type SubjectQuestionMap = Partial<Record<Subject, string[]>>;
 
 export interface ExamSession {
   id: string;
   title: string;
-  mode: "single";
-  subject: Subject;
+  mode: ExamMode;
+  subject?: Subject;
+  subjects?: Subject[];
+  subjectQuestionMap?: SubjectQuestionMap;
   questionIds: string[];
   durationMinutes: number;
+  requiresProductKey?: boolean;
   startAt: Timestamp;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
@@ -45,10 +51,33 @@ export interface Attempt {
   autoSubmitted?: boolean;
   score?: number;
   totalPossible?: number;
+  breakdown?: Partial<Record<Subject, { score: number; total: number }>>;
+  productKeyUsed?: string | null;
 }
 
 export function attemptId(sessionId: string, uid: string) {
   return `${sessionId}_${uid}`;
+}
+
+export function getSessionSubjects(session: Pick<ExamSession, "mode" | "subject" | "subjects" | "subjectQuestionMap">) {
+  if (session.mode === "single") {
+    return session.subject ? [session.subject] : [];
+  }
+
+  const fromSubjects = session.subjects ?? [];
+  if (fromSubjects.length > 0) return fromSubjects;
+
+  return Object.keys(session.subjectQuestionMap ?? {}) as Subject[];
+}
+
+export function sessionMatchesStudent(
+  session: Pick<ExamSession, "mode" | "subject" | "subjects" | "subjectQuestionMap">,
+  studentSubjects: Subject[],
+) {
+  const sessionSubjects = getSessionSubjects(session);
+  if (session.mode === "single") return sessionSubjects.some((subject) => studentSubjects.includes(subject));
+  if (sessionSubjects.length === 0) return false;
+  return sessionSubjects.every((subject) => studentSubjects.includes(subject));
 }
 
 export function shuffle<T>(arr: T[]): T[] {
@@ -78,4 +107,14 @@ export function formatRemaining(ms: number): string {
   const s = total % 60;
   const pad = (n: number) => String(n).padStart(2, "0");
   return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+}
+
+export function formatDurationFromMs(ms: number) {
+  if (ms <= 0) return "0m";
+  const totalMinutes = Math.round(ms / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
 }
