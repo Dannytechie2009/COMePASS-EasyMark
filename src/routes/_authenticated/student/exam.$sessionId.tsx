@@ -28,6 +28,7 @@ import {
   type Question,
 } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { CheckCircle2, Clock3, KeyRound, ShieldCheck } from "lucide-react";
 
@@ -46,6 +47,10 @@ function TakeExam() {
   const [now, setNow] = useState(Date.now());
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [needsKey, setNeedsKey] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const [unlockedKey, setUnlockedKey] = useState<string | null>(null);
   const submittingRef = useRef(false);
 
   // Subscribe to session
