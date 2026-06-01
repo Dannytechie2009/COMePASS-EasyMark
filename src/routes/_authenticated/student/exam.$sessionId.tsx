@@ -79,6 +79,11 @@ function TakeExam() {
           attemptData = { id: asnap.id, ...(asnap.data() as any) };
         } else {
           if (status !== "live") { setLoading(false); return; }
+          if (session.requiresProductKey && unlockedKey == null) {
+            setNeedsKey(true);
+            setLoading(false);
+            return;
+          }
           const order = session.shuffleQuestions ? shuffle(session.questionIds) : [...session.questionIds];
           const optionOrder: Record<string, number[]> = {};
           if (session.shuffleOptions) for (const qid of order) optionOrder[qid] = shuffle([0, 1, 2, 3]);
@@ -92,11 +97,12 @@ function TakeExam() {
             questionOrder: order,
             optionOrder: session.shuffleOptions ? optionOrder : null,
             submitted: false,
-            productKeyUsed: null,
+            productKeyUsed: unlockedKey ?? null,
           };
           await setDoc(aref, newAttempt);
           const created = await getDoc(aref);
           attemptData = { id: created.id, ...(created.data() as any) };
+          setNeedsKey(false);
         }
         setAttempt(attemptData);
 
@@ -116,7 +122,7 @@ function TakeExam() {
         setLoading(false);
       }
     })();
-  }, [session, profile, user, sessionId]);
+  }, [session, profile, user, sessionId, unlockedKey]);
 
   // Tick timer
   useEffect(() => {
