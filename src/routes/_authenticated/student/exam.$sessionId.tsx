@@ -160,10 +160,17 @@ function TakeExam() {
     if (!auto && !confirm("Submit your exam? You can't change answers after this.")) return;
     submittingRef.current = true;
     try {
-      // Score
+      // Score + per-subject breakdown
       let score = 0;
+      const breakdown: Record<string, { score: number; total: number }> = {};
       for (const q of questions) {
-        if (attempt.answers[q.id] === q.correctIndex) score++;
+        const subj = q.subject;
+        if (!breakdown[subj]) breakdown[subj] = { score: 0, total: 0 };
+        breakdown[subj].total += 1;
+        if (attempt.answers[q.id] === q.correctIndex) {
+          score++;
+          breakdown[subj].score += 1;
+        }
       }
       await updateDoc(doc(getDb(), "attempts", attempt.id), {
         submitted: true,
@@ -171,6 +178,7 @@ function TakeExam() {
         endedAt: serverTimestamp(),
         score,
         totalPossible: questions.length,
+        breakdown,
       });
       toast.success(auto ? "Time up — submitted automatically" : "Submitted");
       nav({ to: "/student/exam/$sessionId/result", params: { sessionId } });
