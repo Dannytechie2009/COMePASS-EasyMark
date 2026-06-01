@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   collection,
   query,
+  where,
   orderBy,
   onSnapshot,
   addDoc,
@@ -131,12 +132,9 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
       const fetched: Record<string, Question[]> = {};
       for (const subj of missing) {
         const snap = await getDocs(
-          query(collection(getDb(), "questions"), /* eslint-disable-next-line */ ...[] as any),
+          query(collection(getDb(), "questions"), where("subject", "==", subj)),
         );
-        // Filter client-side to avoid index requirement
-        fetched[subj] = snap.docs
-          .map((d) => ({ id: d.id, ...(d.data() as any) }))
-          .filter((q: Question) => q.subject === subj);
+        fetched[subj] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Question[];
       }
       setBank((prev) => ({ ...prev, ...fetched }));
     })();
