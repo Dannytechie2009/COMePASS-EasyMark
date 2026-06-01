@@ -65,11 +65,33 @@ function ResultPage() {
         <h1 className="text-2xl font-bold mt-2">{session.title} — Result</h1>
       </div>
 
-      <div className="rounded-lg border p-6 text-center">
+      <div className="rounded-2xl border border-border/70 p-6 text-center bg-card shadow-sm">
         <p className="text-sm text-muted-foreground">Your score</p>
         <p className="text-5xl font-bold mt-2">{attempt.score}<span className="text-2xl text-muted-foreground">/{attempt.totalPossible}</span></p>
         <p className="text-muted-foreground mt-2">{pct}%</p>
       </div>
+
+      {attempt.breakdown && Object.keys(attempt.breakdown).length > 1 && (
+        <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
+          <h3 className="font-semibold mb-3">Subject breakdown</h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {Object.entries(attempt.breakdown).map(([subj, b]) => {
+              const sp = b.total ? Math.round((b.score / b.total) * 100) : 0;
+              return (
+                <div key={subj} className="rounded-xl bg-muted/60 p-4">
+                  <div className="flex justify-between text-sm font-medium">
+                    <span>{subj}</span>
+                    <span>{b.score}/{b.total} · {sp}%</span>
+                  </div>
+                  <div className="mt-2 h-2 rounded-full bg-background overflow-hidden">
+                    <div className="h-full bg-primary" style={{ width: `${sp}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {!correctionsOpen && (
         <p className="text-sm text-muted-foreground text-center">
