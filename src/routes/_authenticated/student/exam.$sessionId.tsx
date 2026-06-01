@@ -216,6 +216,41 @@ function TakeExam() {
     );
   }
 
+  if (needsKey && session.requiresProductKey) {
+    return (
+      <div className="space-y-6 max-w-md">
+        <div className="space-y-2">
+          <Link to="/student" className="text-sm text-muted-foreground hover:underline">← Back to dashboard</Link>
+          <h1 className="text-2xl font-semibold">{session.title}</h1>
+          <p className="text-sm text-muted-foreground">{sessionSubjects.join(" • ")}</p>
+        </div>
+        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <KeyRound className="size-4 text-primary" /> Enter product key to start
+          </div>
+          <p className="text-sm text-muted-foreground">This exam requires a key from your tutor.</p>
+          <Input
+            value={keyInput}
+            onChange={(e) => { setKeyInput(e.target.value.toUpperCase()); setKeyError(null); }}
+            placeholder="ABCD1234EF"
+            className="font-mono tracking-wider"
+          />
+          {keyError && <p className="text-sm text-destructive">{keyError}</p>}
+          <Button
+            className="w-full"
+            onClick={() => {
+              const entered = keyInput.trim();
+              if (!entered) return setKeyError("Enter the key");
+              if (entered !== (session.productKey ?? "").trim()) return setKeyError("Invalid key");
+              setUnlockedKey(entered);
+              setLoading(true);
+            }}
+          >Unlock exam</Button>
+        </div>
+      </div>
+    );
+  }
+
   if (status === "scheduled") {
     const ms = session.startAt.toMillis() - now;
     return (
