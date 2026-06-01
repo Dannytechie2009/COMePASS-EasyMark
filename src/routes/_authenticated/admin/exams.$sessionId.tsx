@@ -4,7 +4,7 @@ import { doc, onSnapshot, updateDoc, collection, query, where } from "firebase/f
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Attempt, ExamSession } from "@/lib/exams";
-import { computeStatus } from "@/lib/exams";
+import { computeStatus, getSessionSubjects } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -51,8 +51,11 @@ function SessionDetail() {
         <Link to="/admin/exams" className="text-sm text-muted-foreground hover:underline">← All exams</Link>
         <h1 className="text-2xl font-bold mt-2">{session.title}</h1>
         <p className="text-sm text-muted-foreground">
-          {session.subject} · {session.questionIds.length} questions · {session.durationMinutes} min · starts {session.startAt.toDate().toLocaleString()}
+          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min · starts {session.startAt.toDate().toLocaleString()}
         </p>
+        {session.requiresProductKey && (
+          <p className="text-sm mt-1">Product key: <span className="font-mono bg-muted px-2 py-0.5 rounded">{session.productKey}</span></p>
+        )}
         <p className="text-sm mt-2">Status: <span className="font-medium">{status}</span></p>
       </div>
 

@@ -28,6 +28,7 @@ import {
   type Question,
 } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { CheckCircle2, Clock3, KeyRound, ShieldCheck } from "lucide-react";
 
@@ -46,6 +47,10 @@ function TakeExam() {
   const [now, setNow] = useState(Date.now());
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [needsKey, setNeedsKey] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
+  const [keyError, setKeyError] = useState<string | null>(null);
+  const [unlockedKey, setUnlockedKey] = useState<string | null>(null);
   const submittingRef = useRef(false);
 
   // Subscribe to session
@@ -74,6 +79,11 @@ function TakeExam() {
           attemptData = { id: asnap.id, ...(asnap.data() as any) };
         } else {
           if (status !== "live") { setLoading(false); return; }
+          if (session.requiresProductKey && unlockedKey == null) {
+            setNeedsKey(true);
+            setLoading(false);
+            return;
+          }
           const order = session.shuffleQuestions ? shuffle(session.questionIds) : [...session.questionIds];
           const optionOrder: Record<string, number[]> = {};
           if (session.shuffleOptions) for (const qid of order) optionOrder[qid] = shuffle([0, 1, 2, 3]);
@@ -87,11 +97,12 @@ function TakeExam() {
             questionOrder: order,
             optionOrder: session.shuffleOptions ? optionOrder : null,
             submitted: false,
-            productKeyUsed: null,
+            productKeyUsed: unlockedKey ?? null,
           };
           await setDoc(aref, newAttempt);
           const created = await getDoc(aref);
           attemptData = { id: created.id, ...(created.data() as any) };
+          setNeedsKey(false);
         }
         setAttempt(attemptData);
 
@@ -111,7 +122,7 @@ function TakeExam() {
         setLoading(false);
       }
     })();
-  }, [session, profile, user, sessionId]);
+  }, [session, profile, user, sessionId, unlockedKey]);
 
   // Tick timer
   useEffect(() => {
@@ -149,10 +160,17 @@ function TakeExam() {
     if (!auto && !confirm("Submit your exam? You can't change answers after this.")) return;
     submittingRef.current = true;
     try {
-      // Score
+      // Score + per-subject breakdown
       let score = 0;
+      const breakdown: Record<string, { score: number; total: number }> = {};
       for (const q of questions) {
-        if (attempt.answers[q.id] === q.correctIndex) score++;
+        const subj = q.subject;
+        if (!breakdown[subj]) breakdown[subj] = { score: 0, total: 0 };
+        breakdown[subj].total += 1;
+        if (attempt.answers[q.id] === q.correctIndex) {
+          score++;
+          breakdown[subj].score += 1;
+        }
       }
       await updateDoc(doc(getDb(), "attempts", attempt.id), {
         submitted: true,
@@ -160,6 +178,7 @@ function TakeExam() {
         endedAt: serverTimestamp(),
         score,
         totalPossible: questions.length,
+        breakdown,
       });
       toast.success(auto ? "Time up — submitted automatically" : "Submitted");
       nav({ to: "/student/exam/$sessionId/result", params: { sessionId } });
@@ -193,6 +212,41 @@ function TakeExam() {
       <div className="space-y-4">
         <p>You've already submitted this exam.</p>
         <Button asChild><Link to="/student/exam/$sessionId/result" params={{ sessionId }}>View result</Link></Button>
+      </div>
+    );
+  }
+
+  if (needsKey && session.requiresProductKey) {
+    return (
+      <div className="space-y-6 max-w-md">
+        <div className="space-y-2">
+          <Link to="/student" className="text-sm text-muted-foreground hover:underline">← Back to dashboard</Link>
+          <h1 className="text-2xl font-semibold">{session.title}</h1>
+          <p className="text-sm text-muted-foreground">{sessionSubjects.join(" • ")}</p>
+        </div>
+        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <KeyRound className="size-4 text-primary" /> Enter product key to start
+          </div>
+          <p className="text-sm text-muted-foreground">This exam requires a key from your tutor.</p>
+          <Input
+            value={keyInput}
+            onChange={(e) => { setKeyInput(e.target.value.toUpperCase()); setKeyError(null); }}
+            placeholder="ABCD1234EF"
+            className="font-mono tracking-wider"
+          />
+          {keyError && <p className="text-sm text-destructive">{keyError}</p>}
+          <Button
+            className="w-full"
+            onClick={() => {
+              const entered = keyInput.trim();
+              if (!entered) return setKeyError("Enter the key");
+              if (entered !== (session.productKey ?? "").trim()) return setKeyError("Invalid key");
+              setUnlockedKey(entered);
+              setLoading(true);
+            }}
+          >Unlock exam</Button>
+        </div>
       </div>
     );
   }
