@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import logoAsset from "@/assets/comepass-logo.png.asset.json";
+
 
 export const Route = createFileRoute("/")({
   component: Landing,
