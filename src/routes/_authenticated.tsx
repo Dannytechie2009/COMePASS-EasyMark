@@ -3,6 +3,7 @@ import { signOut } from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
 import { getFirebaseAuth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/BrandMark";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -20,20 +21,25 @@ function AuthenticatedLayout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto max-w-6xl px-6 py-3 flex items-center justify-between">
-          <Link to="/" className="font-bold">JAMB CBT</Link>
-          <nav className="flex items-center gap-3 text-sm">
+      <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+          <Link to="/"><BrandMark size={36} /></Link>
+          <nav className="flex items-center gap-2 sm:gap-4 text-sm">
             {isAdmin ? (
               <>
-                <Link to="/admin" className="hover:underline">Dashboard</Link>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">{profile.role}</span>
+                <Link to="/admin" className="hidden sm:inline hover:text-primary transition-colors">Dashboard</Link>
+                <Link to="/admin/exams" className="hidden md:inline hover:text-primary transition-colors">Exams</Link>
+                <Link to="/admin/questions" className="hidden md:inline hover:text-primary transition-colors">Questions</Link>
+                <Link to="/admin/users" className="hidden lg:inline hover:text-primary transition-colors">Users</Link>
+                <Link to="/admin/departments" className="hidden lg:inline hover:text-primary transition-colors">Analytics</Link>
               </>
             ) : (
-              <Link to="/student" className="hover:underline">My exams</Link>
+              <>
+                <Link to="/student" className="hover:text-primary transition-colors">Exams</Link>
+                <Link to="/student/results" className="hover:text-primary transition-colors">Results</Link>
+              </>
             )}
-            <span className="text-muted-foreground hidden sm:inline">{profile.name}</span>
+            <span className="text-muted-foreground hidden sm:inline truncate max-w-[140px]">{profile.name}</span>
             <Button
               size="sm"
               variant="outline"
@@ -48,13 +54,16 @@ function AuthenticatedLayout() {
         </div>
       </header>
       {!user.emailVerified && (
-        <div className="bg-yellow-100 dark:bg-yellow-900/30 border-b border-yellow-300 text-yellow-900 dark:text-yellow-100 text-sm px-6 py-2 text-center">
+        <div className="bg-secondary/10 border-b border-secondary/30 text-secondary text-sm px-6 py-2 text-center">
           Please <Link to="/verify-email" className="underline font-medium">verify your email</Link> to take exams.
         </div>
       )}
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         <Outlet />
       </main>
+      <footer className="mx-auto max-w-6xl px-4 sm:px-6 py-8 text-xs text-muted-foreground text-center">
+        COMePASS Prevarsity · Impacting lives for global relevance
+      </footer>
     </div>
   );
 }
