@@ -47,17 +47,14 @@ function AdminHome() {
         <Card icon={BookOpen} title="Question bank" desc="Create, edit and organise questions by subject." to="/admin/questions" />
         <Card icon={LayoutDashboard} title="Exam sessions" desc="Schedule single-subject and combo exams, then monitor attempts." to="/admin/exams" />
         {isSuper ? (
-          <Card icon={KeyRound} title="Product keys" desc="Generate access codes and track trial usage for combo exams." to="/admin/keys" />
-        ) : (
-          <MutedCard icon={KeyRound} title="Product keys" desc="Super admins issue combo access codes and trial bundles." />
-        )}
-        {isSuper ? (
-          <Card icon={Users2} title="Users" desc="Review student profiles, exam activity and account status." to="/admin/users" />
+          <Card icon={Users2} title="Users" desc="Review student profiles, change roles and oversee accounts." to="/admin/users" />
         ) : (
           <MutedCard icon={Users2} title="Users" desc="User management is reserved for super admins." />
         )}
-        <Card icon={ChartColumnBig} title="Departments" desc="Track participation and subject performance by department." to="/admin/departments" />
+        <Card icon={ChartColumnBig} title="Departments" desc="Participation and subject performance by department." to="/admin/departments" />
+        <MutedCard icon={KeyRound} title="Product keys" desc="Each exam can require its own product key — set it on the exam creation form." />
         <MutedCard icon={BadgeCheck} title="Corrections & results" desc="Release corrections and review live scoreboards from each session detail page." />
+
       </section>
 
       <section className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm sm:p-6">

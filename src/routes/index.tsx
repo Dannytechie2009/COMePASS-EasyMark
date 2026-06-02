@@ -91,12 +91,14 @@ function Navbar() {
       }`}
     >
       <div className="mx-auto max-w-[1280px] px-5 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <span className="grid place-items-center w-9 h-9 rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <GraduationCap className="w-5 h-5" />
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-lg">
+          <img src={logoAsset.url} alt="COMePASS Prevarsity" width={40} height={40} className="rounded-full ring-1 ring-border" />
+          <span className="leading-tight">
+            <span className="block">COM<span className="text-[var(--brand-red)]">e</span>PASS</span>
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground -mt-0.5">Prevarsity</span>
           </span>
-          <span>JAMB<span className="text-primary">CBT</span></span>
         </Link>
+
         <nav className="hidden lg:flex items-center gap-7 text-sm font-medium">
           {nav.map((n) => (
             <a key={n.href} href={n.href} className="text-muted-foreground hover:text-foreground transition-colors">
