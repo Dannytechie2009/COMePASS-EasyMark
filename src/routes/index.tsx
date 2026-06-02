@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import logoAsset from "@/assets/comepass-logo.png.asset.json";
+
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -91,12 +93,14 @@ function Navbar() {
       }`}
     >
       <div className="mx-auto max-w-[1280px] px-5 lg:px-8 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-          <span className="grid place-items-center w-9 h-9 rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <GraduationCap className="w-5 h-5" />
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-lg">
+          <img src={logoAsset.url} alt="COMePASS Prevarsity" width={40} height={40} className="rounded-full ring-1 ring-border" />
+          <span className="leading-tight">
+            <span className="block">COM<span className="text-[var(--brand-red)]">e</span>PASS</span>
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground -mt-0.5">Prevarsity</span>
           </span>
-          <span>JAMB<span className="text-primary">CBT</span></span>
         </Link>
+
         <nav className="hidden lg:flex items-center gap-7 text-sm font-medium">
           {nav.map((n) => (
             <a key={n.href} href={n.href} className="text-muted-foreground hover:text-foreground transition-colors">
@@ -421,7 +425,7 @@ function Testimonials() {
         <SectionHeader
           eyebrow="Reviews"
           title="Loved by tutors and students"
-          subtitle="Real classrooms across Nigeria use JAMB CBT every week."
+          subtitle="Real classrooms across Nigeria train with COMePASS Prevarsity every week."
         />
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {t.map((r, i) => (
@@ -597,8 +601,9 @@ function Footer() {
       </div>
       <div className="border-t">
         <div className="mx-auto max-w-[1280px] px-5 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} JAMB CBT. All rights reserved.</span>
-          <span>Made with care for Nigerian classrooms.</span>
+          <span>© {new Date().getFullYear()} COMePASS Prevarsity. Impacting lives for global relevance.</span>
+          <span>Giving academic directions.</span>
+
         </div>
       </div>
     </footer>

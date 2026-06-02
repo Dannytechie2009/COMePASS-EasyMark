@@ -65,8 +65,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "JAMB CBT — Tutorial Center" },
-      { name: "description", content: "Practice JAMB UTME exams in a real CBT environment." },
+      { title: "COMePASS Prevarsity — Giving Academic Directions" },
+      { name: "description", content: "COMePASS Prevarsity: a JAMB CBT and tutorial center impacting lives for global relevance." },
+
     ],
     links: [
       { rel: "stylesheet", href: appCss },
