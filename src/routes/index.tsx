@@ -425,7 +425,7 @@ function Testimonials() {
         <SectionHeader
           eyebrow="Reviews"
           title="Loved by tutors and students"
-          subtitle="Real classrooms across Nigeria use JAMB CBT every week."
+          subtitle="Real classrooms across Nigeria train with COMePASS Prevarsity every week."
         />
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {t.map((r, i) => (
@@ -601,8 +601,9 @@ function Footer() {
       </div>
       <div className="border-t">
         <div className="mx-auto max-w-[1280px] px-5 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} JAMB CBT. All rights reserved.</span>
-          <span>Made with care for Nigerian classrooms.</span>
+          <span>© {new Date().getFullYear()} COMePASS Prevarsity. Impacting lives for global relevance.</span>
+          <span>Giving academic directions.</span>
+
         </div>
       </div>
     </footer>
