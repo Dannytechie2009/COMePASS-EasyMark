@@ -175,7 +175,10 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   async function save() {
     if (!title.trim()) return toast.error("Title required");
     if (mode === "combo" && comboSubjects.length !== 4) return toast.error("Pick exactly 4 subjects for a combo exam");
-    if (requireKey && !productKey.trim()) return toast.error("Set a product key or disable the requirement");
+    if (requireKey && keyMode === "shared" && !productKey.trim()) return toast.error("Set a shared key or switch mode");
+    if (requireKey && keyMode === "individual" && (individualCount < 1 || individualCount > 500)) {
+      return toast.error("Individual key count must be between 1 and 500");
+    }
 
     const subjectQuestionMap: SubjectQuestionMap = {};
     let questionIds: string[] = [];
@@ -201,14 +204,40 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         createdAt: serverTimestamp(),
         requiresProductKey: requireKey,
       };
-      if (requireKey) payload.productKey = productKey.trim();
+      if (requireKey) {
+        payload.keyMode = keyMode;
+        if (keyMode === "shared") payload.productKey = productKey.trim();
+        else payload.individualKeyCount = individualCount;
+      }
       if (mode === "single") {
         payload.subject = singleSubject;
       } else {
         payload.subjects = comboSubjects;
         payload.subjectQuestionMap = subjectQuestionMap;
       }
-      await addDoc(collection(getDb(), "examSessions"), payload);
+      const ref = await addDoc(collection(getDb(), "examSessions"), payload);
+
+      // Pre-generate individual keys as a subcollection
+      if (requireKey && keyMode === "individual") {
+        const used = new Set<string>();
+        const writes: Promise<unknown>[] = [];
+        while (used.size < individualCount) {
+          const k = randomKey();
+          if (used.has(k)) continue;
+          used.add(k);
+          writes.push(
+            setDoc(doc(getDb(), "examSessions", ref.id, "productKeys", k), {
+              value: k,
+              used: false,
+              usedBy: null,
+              usedAt: null,
+              createdAt: serverTimestamp(),
+            }),
+          );
+        }
+        await Promise.all(writes);
+      }
+
       toast.success("Exam scheduled");
       onClose();
     } catch (e: any) {
