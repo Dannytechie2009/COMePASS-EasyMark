@@ -15,6 +15,7 @@ export interface Question {
 
 export type ExamStatus = "scheduled" | "live" | "ended" | "corrections_open";
 export type ExamMode = "single" | "combo";
+export type KeyMode = "shared" | "individual";
 
 export type SubjectQuestionMap = Partial<Record<Subject, string[]>>;
 
@@ -28,7 +29,9 @@ export interface ExamSession {
   questionIds: string[];
   durationMinutes: number;
   requiresProductKey?: boolean;
+  keyMode?: KeyMode;
   productKey?: string;
+  individualKeyCount?: number;
   startAt: Timestamp;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;

@@ -10,11 +10,13 @@ import {
   getDocs,
   serverTimestamp,
   Timestamp,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { ALL_SUBJECTS, type Subject } from "@/lib/subjects";
-import type { ExamMode, ExamSession, Question, SubjectQuestionMap } from "@/lib/exams";
+import type { ExamMode, ExamSession, KeyMode, Question, SubjectQuestionMap } from "@/lib/exams";
 import { computeStatus, getSessionSubjects } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,7 +118,9 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(false);
   const [requireKey, setRequireKey] = useState(false);
+  const [keyMode, setKeyMode] = useState<KeyMode>("shared");
   const [productKey, setProductKey] = useState("");
+  const [individualCount, setIndividualCount] = useState(20);
   const [busy, setBusy] = useState(false);
 
   const activeSubjects = useMemo<Subject[]>(
@@ -171,7 +175,10 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   async function save() {
     if (!title.trim()) return toast.error("Title required");
     if (mode === "combo" && comboSubjects.length !== 4) return toast.error("Pick exactly 4 subjects for a combo exam");
-    if (requireKey && !productKey.trim()) return toast.error("Set a product key or disable the requirement");
+    if (requireKey && keyMode === "shared" && !productKey.trim()) return toast.error("Set a shared key or switch mode");
+    if (requireKey && keyMode === "individual" && (individualCount < 1 || individualCount > 500)) {
+      return toast.error("Individual key count must be between 1 and 500");
+    }
 
     const subjectQuestionMap: SubjectQuestionMap = {};
     let questionIds: string[] = [];
@@ -197,14 +204,40 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         createdAt: serverTimestamp(),
         requiresProductKey: requireKey,
       };
-      if (requireKey) payload.productKey = productKey.trim();
+      if (requireKey) {
+        payload.keyMode = keyMode;
+        if (keyMode === "shared") payload.productKey = productKey.trim();
+        else payload.individualKeyCount = individualCount;
+      }
       if (mode === "single") {
         payload.subject = singleSubject;
       } else {
         payload.subjects = comboSubjects;
         payload.subjectQuestionMap = subjectQuestionMap;
       }
-      await addDoc(collection(getDb(), "examSessions"), payload);
+      const ref = await addDoc(collection(getDb(), "examSessions"), payload);
+
+      // Pre-generate individual keys as a subcollection
+      if (requireKey && keyMode === "individual") {
+        const used = new Set<string>();
+        const writes: Promise<unknown>[] = [];
+        while (used.size < individualCount) {
+          const k = randomKey();
+          if (used.has(k)) continue;
+          used.add(k);
+          writes.push(
+            setDoc(doc(getDb(), "examSessions", ref.id, "productKeys", k), {
+              value: k,
+              used: false,
+              usedBy: null,
+              usedAt: null,
+              createdAt: serverTimestamp(),
+            }),
+          );
+        }
+        await Promise.all(writes);
+      }
+
       toast.success("Exam scheduled");
       onClose();
     } catch (e: any) {
@@ -290,21 +323,50 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
       <div className="rounded-xl border p-4 space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
           <Checkbox checked={requireKey} onCheckedChange={(v) => setRequireKey(!!v)} />
-          Require a product key to start this exam
+          Require a product key (PIN) to start this exam
         </label>
         {requireKey && (
-          <div className="grid sm:grid-cols-[1fr_auto] gap-2">
-            <Input
-              value={productKey}
-              onChange={(e) => setProductKey(e.target.value.toUpperCase())}
-              placeholder="Set a key students must enter"
-              className="font-mono tracking-wider"
-            />
-            <Button type="button" variant="outline" onClick={() => setProductKey(randomKey())}>Generate</Button>
-          </div>
-        )}
-        {requireKey && productKey && (
-          <p className="text-xs text-muted-foreground">Share this key only with students who should access this exam.</p>
+          <>
+            <div className="inline-flex rounded-lg border p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => setKeyMode("shared")}
+                className={`px-3 py-1.5 rounded-md ${keyMode === "shared" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >Shared PIN (one for everyone)</button>
+              <button
+                type="button"
+                onClick={() => setKeyMode("individual")}
+                className={`px-3 py-1.5 rounded-md ${keyMode === "individual" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              >Individual PINs (one per candidate)</button>
+            </div>
+
+            {keyMode === "shared" ? (
+              <div className="space-y-2">
+                <div className="grid sm:grid-cols-[1fr_auto] gap-2">
+                  <Input
+                    value={productKey}
+                    onChange={(e) => setProductKey(e.target.value.toUpperCase())}
+                    placeholder="Set a PIN every student will enter"
+                    className="font-mono tracking-wider"
+                  />
+                  <Button type="button" variant="outline" onClick={() => setProductKey(randomKey())}>Generate</Button>
+                </div>
+                <p className="text-xs text-muted-foreground">All students sit this exam with the same PIN — share it with the department.</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label className="text-xs">Number of candidates</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={individualCount}
+                  onChange={(e) => setIndividualCount(Number(e.target.value))}
+                />
+                <p className="text-xs text-muted-foreground">A unique PIN is generated per candidate. Each PIN works for one student only. View &amp; print them from the exam detail page after creation.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

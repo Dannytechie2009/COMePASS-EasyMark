@@ -13,6 +13,7 @@ import {
   query,
   where,
   documentId,
+  runTransaction,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
@@ -238,12 +239,41 @@ function TakeExam() {
           {keyError && <p className="text-sm text-destructive">{keyError}</p>}
           <Button
             className="w-full"
-            onClick={() => {
-              const entered = keyInput.trim();
-              if (!entered) return setKeyError("Enter the key");
-              if (entered !== (session.productKey ?? "").trim()) return setKeyError("Invalid key");
-              setUnlockedKey(entered);
-              setLoading(true);
+            onClick={async () => {
+              const entered = keyInput.trim().toUpperCase();
+              if (!entered) return setKeyError("Enter the PIN");
+              const mode = session.keyMode ?? "shared";
+              if (mode === "shared") {
+                if (entered !== (session.productKey ?? "").trim().toUpperCase()) {
+                  return setKeyError("Invalid PIN");
+                }
+                setUnlockedKey(entered);
+                setLoading(true);
+                return;
+              }
+              // individual mode — claim the PIN atomically
+              try {
+                const keyRef = doc(getDb(), "examSessions", sessionId, "productKeys", entered);
+                await runTransaction(getDb(), async (tx) => {
+                  const snap = await tx.get(keyRef);
+                  if (!snap.exists()) throw new Error("PIN not recognised");
+                  const data = snap.data() as { used: boolean; usedBy?: string | null };
+                  if (data.used && data.usedBy !== profile!.uid) {
+                    throw new Error("This PIN has already been used by another candidate");
+                  }
+                  if (!data.used) {
+                    tx.update(keyRef, {
+                      used: true,
+                      usedBy: profile!.uid,
+                      usedAt: serverTimestamp(),
+                    });
+                  }
+                });
+                setUnlockedKey(entered);
+                setLoading(true);
+              } catch (e: any) {
+                setKeyError(e?.message ?? "Could not validate PIN");
+              }
             }}
           >Unlock exam</Button>
         </div>

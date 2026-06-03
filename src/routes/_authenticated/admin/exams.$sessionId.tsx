@@ -12,6 +12,14 @@ export const Route = createFileRoute("/_authenticated/admin/exams/$sessionId")({
   component: SessionDetail,
 });
 
+interface KeyDoc {
+  id: string;
+  value: string;
+  used: boolean;
+  usedBy?: string | null;
+  usedAt?: any;
+}
+
 function SessionDetail() {
   const { profile } = useAuth();
   if (profile && profile.role === "student") return <Navigate to="/student" />;
@@ -19,6 +27,7 @@ function SessionDetail() {
   const { sessionId } = useParams({ from: "/_authenticated/admin/exams/$sessionId" });
   const [session, setSession] = useState<ExamSession | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [keys, setKeys] = useState<KeyDoc[]>([]);
 
   useEffect(() => {
     const unsub1 = onSnapshot(doc(getDb(), "examSessions", sessionId), (s) => {
@@ -29,7 +38,11 @@ function SessionDetail() {
       query(collection(getDb(), "attempts"), where("sessionId", "==", sessionId)),
       (snap) => setAttempts(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
     );
-    return () => { unsub1(); unsub2(); };
+    const unsub3 = onSnapshot(
+      collection(getDb(), "examSessions", sessionId, "productKeys"),
+      (snap) => setKeys(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
+    );
+    return () => { unsub1(); unsub2(); unsub3(); };
   }, [sessionId]);
 
   if (!session) return <div className="text-muted-foreground">Loading…</div>;
@@ -44,18 +57,17 @@ function SessionDetail() {
   }
 
   const sorted = [...attempts].sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  const usedKeys = keys.filter((k) => k.used).length;
 
   return (
     <div className="space-y-6">
       <div>
         <Link to="/admin/exams" className="text-sm text-muted-foreground hover:underline">← All exams</Link>
-        <h1 className="text-2xl font-bold mt-2">{session.title}</h1>
-        <p className="text-sm text-muted-foreground">
-          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min · starts {session.startAt.toDate().toLocaleString()}
+        <h1 className="text-2xl sm:text-3xl font-bold mt-2">{session.title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min
         </p>
-        {session.requiresProductKey && (
-          <p className="text-sm mt-1">Product key: <span className="font-mono bg-muted px-2 py-0.5 rounded">{session.productKey}</span></p>
-        )}
+        <p className="text-xs text-muted-foreground">Starts {session.startAt.toDate().toLocaleString()}</p>
         <p className="text-sm mt-2">Status: <span className="font-medium">{status}</span></p>
       </div>
 
@@ -68,19 +80,71 @@ function SessionDetail() {
         )}
       </div>
 
-      <div className="rounded-lg border">
+      {session.requiresProductKey && (
+        <div className="rounded-2xl border bg-card shadow-sm">
+          <div className="p-4 border-b flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-semibold">Product keys (PINs)</h2>
+              <p className="text-xs text-muted-foreground">
+                Mode: <span className="font-medium">{session.keyMode ?? "shared"}</span>
+                {session.keyMode === "individual" && ` · ${usedKeys}/${keys.length} used`}
+              </p>
+            </div>
+            {(session.keyMode ?? "shared") === "shared" && (
+              <div className="font-mono text-sm bg-muted px-3 py-1.5 rounded-md tracking-wider">
+                {session.productKey}
+              </div>
+            )}
+          </div>
+
+          {session.keyMode === "individual" && (
+            <div className="p-4">
+              <div className="flex justify-end mb-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const txt = keys
+                      .map((k) => `${k.value}\t${k.used ? "USED" : "AVAILABLE"}`)
+                      .join("\n");
+                    navigator.clipboard.writeText(txt);
+                    toast.success("PINs copied");
+                  }}
+                >Copy all</Button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-96 overflow-auto">
+                {keys.map((k) => (
+                  <div
+                    key={k.id}
+                    className={`rounded-md border px-3 py-2 text-sm font-mono tracking-wider ${
+                      k.used ? "bg-muted text-muted-foreground line-through" : "bg-background"
+                    }`}
+                    title={k.used ? `Used by ${k.usedBy ?? ""}` : "Available"}
+                  >
+                    {k.value}
+                  </div>
+                ))}
+                {keys.length === 0 && <p className="col-span-full text-sm text-muted-foreground">No PINs generated yet.</p>}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="rounded-2xl border bg-card shadow-sm">
         <div className="p-4 border-b font-semibold">Scoreboard ({attempts.length})</div>
         <div className="divide-y">
           {sorted.length === 0 && <p className="p-4 text-sm text-muted-foreground">No attempts yet.</p>}
           {sorted.map((a, i) => (
-            <div key={a.id} className="p-4 flex items-center justify-between text-sm">
-              <div>
-                <div className="font-medium">#{i + 1} {a.studentName}</div>
-                <div className="text-muted-foreground text-xs">
+            <div key={a.id} className="p-4 flex items-center justify-between text-sm gap-3">
+              <div className="min-w-0">
+                <div className="font-medium truncate">#{i + 1} {a.studentName}</div>
+                <div className="text-muted-foreground text-xs truncate">
                   {a.studentIdShort ?? a.uid.slice(0, 6)} · {a.submitted ? (a.autoSubmitted ? "auto-submitted" : "submitted") : "in progress"}
+                  {a.productKeyUsed && ` · PIN ${a.productKeyUsed}`}
                 </div>
               </div>
-              <div className="font-mono">
+              <div className="font-mono shrink-0">
                 {a.submitted ? `${a.score}/${a.totalPossible}` : "—"}
               </div>
             </div>
