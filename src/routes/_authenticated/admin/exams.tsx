@@ -118,7 +118,9 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [shuffleQuestions, setShuffleQuestions] = useState(true);
   const [shuffleOptions, setShuffleOptions] = useState(false);
   const [requireKey, setRequireKey] = useState(false);
+  const [keyMode, setKeyMode] = useState<KeyMode>("shared");
   const [productKey, setProductKey] = useState("");
+  const [individualCount, setIndividualCount] = useState(20);
   const [busy, setBusy] = useState(false);
 
   const activeSubjects = useMemo<Subject[]>(
