@@ -65,9 +65,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "COMePASS Prevarsity — Giving Academic Directions" },
-      { name: "description", content: "COMePASS Prevarsity: a JAMB CBT and tutorial center impacting lives for global relevance." },
+      { title: "COMePASS  Exam Manager" },
+      { name: "description", content: "COMePASS Prevarsity: a JAMB CBT application and tutorial center impacting lives for global relevance." },
 
+      { property: "og:title", content: "COMePASS  Exam Manager" },
+      { name: "twitter:title", content: "COMePASS  Exam Manager" },
+      { property: "og:description", content: "COMePASS Prevarsity: a JAMB CBT application and tutorial center impacting lives for global relevance." },
+      { name: "twitter:description", content: "COMePASS Prevarsity: a JAMB CBT application and tutorial center impacting lives for global relevance." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0e7bc5bd-fedc-4813-8e98-57600608bfd3" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/0e7bc5bd-fedc-4813-8e98-57600608bfd3" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
