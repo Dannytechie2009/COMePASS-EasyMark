@@ -10,9 +10,14 @@ import {
   getDocs,
   serverTimestamp,
   Timestamp,
+  doc,
+  setDoc,
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
+import { ALL_SUBJECTS, type Subject } from "@/lib/subjects";
+import type { ExamMode, ExamSession, KeyMode, Question, SubjectQuestionMap } from "@/lib/exams";
+import { computeStatus, getSessionSubjects } from "@/lib/exams";
 import { ALL_SUBJECTS, type Subject } from "@/lib/subjects";
 import type { ExamMode, ExamSession, Question, SubjectQuestionMap } from "@/lib/exams";
 import { computeStatus, getSessionSubjects } from "@/lib/exams";
