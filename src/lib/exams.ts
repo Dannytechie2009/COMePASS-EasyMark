@@ -29,7 +29,9 @@ export interface ExamSession {
   questionIds: string[];
   durationMinutes: number;
   requiresProductKey?: boolean;
+  keyMode?: KeyMode;
   productKey?: string;
+  individualKeyCount?: number;
   startAt: Timestamp;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
