@@ -64,6 +64,9 @@
 @theme inline {
   --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-green: var(--brand-green);
   --color-brand-navy: var(--brand-navy);
   --color-brand-red: var(--brand-red);
   --color-brand-ink: var(--brand-ink);
