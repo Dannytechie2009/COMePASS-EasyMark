@@ -161,6 +161,21 @@ function QuestionBank() {
             </select>
           </div>
           <div className="space-y-2">
+            <Label>Topic {topics.length === 0 && <span className="text-xs text-muted-foreground">(none defined yet — add in Syllabus)</span>}</Label>
+            <select
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={draft.topicId ?? ""}
+              onChange={(e) => {
+                const id = e.target.value || null;
+                const t = topics.find((x) => x.id === id);
+                setDraft({ ...draft, topicId: id, topicTitle: t?.title ?? null });
+              }}
+            >
+              <option value="">— Untagged —</option>
+              {topics.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+            </select>
+          </div>
+          <div className="space-y-2">
             <Label>Question text</Label>
             <Textarea rows={3} value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
           </div>
