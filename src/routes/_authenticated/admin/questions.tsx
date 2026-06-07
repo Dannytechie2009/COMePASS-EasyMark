@@ -45,6 +45,7 @@ function QuestionBank() {
 
   const [subject, setSubject] = useState<Subject>("English");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [editing, setEditing] = useState<Question | null>(null);
   const [draft, setDraft] = useState<typeof EMPTY>(EMPTY);
   const [showForm, setShowForm] = useState(false);
@@ -59,6 +60,8 @@ function QuestionBank() {
       setQuestions(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
     }, (e) => toast.error(e.message));
   }, [subject]);
+
+  useEffect(() => listenTopicsBySubject(subject, setTopics), [subject]);
 
   function openCreate() {
     setEditing(null);
@@ -75,6 +78,8 @@ function QuestionBank() {
       correctIndex: q.correctIndex,
       explanation: q.explanation ?? "",
       imageUrl: q.imageUrl,
+      topicId: q.topicId ?? null,
+      topicTitle: q.topicTitle ?? null,
     });
     setShowForm(true);
   }
