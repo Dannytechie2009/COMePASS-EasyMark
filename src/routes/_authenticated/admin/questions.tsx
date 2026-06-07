@@ -229,6 +229,11 @@ function QuestionBank() {
                 <Button size="sm" variant="ghost" onClick={() => remove(q)}>Delete</Button>
               </div>
             </div>
+            {q.topicTitle && (
+              <span className="inline-block text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                {q.topicTitle}
+              </span>
+            )}
             {q.imageUrl && <img src={q.imageUrl} alt="" className="max-h-40 rounded border" />}
             <ol className="text-sm space-y-1">
               {q.options.map((o, i) => (
