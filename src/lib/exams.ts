@@ -9,6 +9,8 @@ export interface Question {
   correctIndex: 0 | 1 | 2 | 3;
   explanation?: string;
   imageUrl?: string;
+  topicId?: string | null;
+  topicTitle?: string | null;
   createdBy: string;
   createdAt?: Timestamp;
 }

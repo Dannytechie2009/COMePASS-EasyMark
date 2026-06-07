@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/ImageUploader";
+import { listenTopicsBySubject, type Topic } from "@/lib/syllabus";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/questions")({
@@ -34,6 +35,8 @@ const EMPTY: Omit<Question, "id" | "createdBy" | "createdAt"> = {
   correctIndex: 0,
   explanation: "",
   imageUrl: undefined,
+  topicId: null,
+  topicTitle: null,
 };
 
 function QuestionBank() {
@@ -42,6 +45,7 @@ function QuestionBank() {
 
   const [subject, setSubject] = useState<Subject>("English");
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [editing, setEditing] = useState<Question | null>(null);
   const [draft, setDraft] = useState<typeof EMPTY>(EMPTY);
   const [showForm, setShowForm] = useState(false);
@@ -56,6 +60,8 @@ function QuestionBank() {
       setQuestions(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
     }, (e) => toast.error(e.message));
   }, [subject]);
+
+  useEffect(() => listenTopicsBySubject(subject, setTopics), [subject]);
 
   function openCreate() {
     setEditing(null);
@@ -72,6 +78,8 @@ function QuestionBank() {
       correctIndex: q.correctIndex,
       explanation: q.explanation ?? "",
       imageUrl: q.imageUrl,
+      topicId: q.topicId ?? null,
+      topicTitle: q.topicTitle ?? null,
     });
     setShowForm(true);
   }
@@ -88,6 +96,8 @@ function QuestionBank() {
         correctIndex: draft.correctIndex,
         explanation: draft.explanation?.trim() || null,
         imageUrl: draft.imageUrl ?? null,
+        topicId: draft.topicId ?? null,
+        topicTitle: draft.topicTitle ?? null,
         createdBy: profile!.uid,
       };
       if (editing) {
@@ -151,6 +161,21 @@ function QuestionBank() {
             </select>
           </div>
           <div className="space-y-2">
+            <Label>Topic {topics.length === 0 && <span className="text-xs text-muted-foreground">(none defined yet — add in Syllabus)</span>}</Label>
+            <select
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              value={draft.topicId ?? ""}
+              onChange={(e) => {
+                const id = e.target.value || null;
+                const t = topics.find((x) => x.id === id);
+                setDraft({ ...draft, topicId: id, topicTitle: t?.title ?? null });
+              }}
+            >
+              <option value="">— Untagged —</option>
+              {topics.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
+            </select>
+          </div>
+          <div className="space-y-2">
             <Label>Question text</Label>
             <Textarea rows={3} value={draft.text} onChange={(e) => setDraft({ ...draft, text: e.target.value })} />
           </div>
@@ -204,6 +229,11 @@ function QuestionBank() {
                 <Button size="sm" variant="ghost" onClick={() => remove(q)}>Delete</Button>
               </div>
             </div>
+            {q.topicTitle && (
+              <span className="inline-block text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                {q.topicTitle}
+              </span>
+            )}
             {q.imageUrl && <img src={q.imageUrl} alt="" className="max-h-40 rounded border" />}
             <ol className="text-sm space-y-1">
               {q.options.map((o, i) => (
