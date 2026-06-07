@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ImageUploader } from "@/components/ImageUploader";
+import { listenTopicsBySubject, type Topic } from "@/lib/syllabus";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/questions")({
@@ -34,6 +35,8 @@ const EMPTY: Omit<Question, "id" | "createdBy" | "createdAt"> = {
   correctIndex: 0,
   explanation: "",
   imageUrl: undefined,
+  topicId: null,
+  topicTitle: null,
 };
 
 function QuestionBank() {
