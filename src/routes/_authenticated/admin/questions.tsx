@@ -96,6 +96,8 @@ function QuestionBank() {
         correctIndex: draft.correctIndex,
         explanation: draft.explanation?.trim() || null,
         imageUrl: draft.imageUrl ?? null,
+        topicId: draft.topicId ?? null,
+        topicTitle: draft.topicTitle ?? null,
         createdBy: profile!.uid,
       };
       if (editing) {
