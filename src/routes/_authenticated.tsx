@@ -27,6 +27,7 @@ function AuthenticatedLayout() {
         { to: "/admin", label: "Dashboard" },
         { to: "/admin/exams", label: "Exams" },
         { to: "/admin/questions", label: "Questions" },
+        { to: "/admin/syllabus", label: "Syllabus" },
         { to: "/admin/users", label: "Users" },
         { to: "/admin/departments", label: "Analytics" },
       ]
