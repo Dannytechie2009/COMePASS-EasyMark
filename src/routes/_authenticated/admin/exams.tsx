@@ -276,21 +276,31 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
 
   return (
     <div className="rounded-2xl border p-5 space-y-5 bg-card shadow-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-semibold text-lg">New exam</h2>
-        <div className="inline-flex rounded-lg border p-1 text-sm">
-          <button
-            type="button"
-            onClick={() => setMode("single")}
-            className={`px-3 py-1 rounded-md ${mode === "single" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >Single subject</button>
-          <button
-            type="button"
-            onClick={() => setMode("combo")}
-            className={`px-3 py-1 rounded-md ${mode === "combo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >JAMB combo (4)</button>
+        <div className="flex flex-wrap gap-2">
+          <div className="inline-flex rounded-lg border p-1 text-xs">
+            <button type="button" onClick={() => setExamType("utme")}
+              className={`px-3 py-1.5 rounded-md ${examType === "utme" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>UTME</button>
+            <button type="button" onClick={() => setExamType("post_utme")}
+              className={`px-3 py-1.5 rounded-md ${examType === "post_utme" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>POST-UTME</button>
+          </div>
+          <div className="inline-flex rounded-lg border p-1 text-xs">
+            <button type="button" onClick={() => setMode("single")}
+              className={`px-3 py-1.5 rounded-md ${mode === "single" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Single subject</button>
+            <button type="button" onClick={() => setMode("combo")}
+              className={`px-3 py-1.5 rounded-md ${mode === "combo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+              {examType === "utme" ? "JAMB combo (4)" : "Multi-subject"}
+            </button>
+          </div>
         </div>
       </div>
+
+      {examType === "post_utme" && (
+        <p className="text-xs rounded-lg bg-secondary/10 border border-secondary/30 text-secondary-foreground px-3 py-2">
+          POST-UTME mode: pick any subjects (including General Knowledge & Current Affairs). Strict UTME combinations are not enforced.
+        </p>
+      )}
 
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-2 sm:col-span-2">
@@ -306,14 +316,14 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
               value={singleSubject}
               onChange={(e) => setSingleSubject(e.target.value as Subject)}
             >
-              {ALL_SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+              {subjectPool.map((s) => <option key={s}>{s}</option>)}
             </select>
           </div>
         ) : (
           <div className="space-y-2 sm:col-span-2">
-            <Label>Subjects ({comboSubjects.length}/4)</Label>
+            <Label>Subjects ({comboSubjects.length}{examType === "utme" ? "/4" : ""})</Label>
             <div className="flex flex-wrap gap-2">
-              {ALL_SUBJECTS.map((s) => {
+              {subjectPool.map((s) => {
                 const on = comboSubjects.includes(s);
                 return (
                   <button
