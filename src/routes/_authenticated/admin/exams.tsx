@@ -175,21 +175,31 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   function toggleComboSubject(s: Subject) {
     setComboSubjects((prev) => {
       if (prev.includes(s)) return prev.filter((x) => x !== s);
-      if (prev.length >= 4) {
-        toast.error("Combo exams allow up to 4 subjects");
+      // POST-UTME allows free combos (no 4-cap); UTME keeps the strict cap of 4.
+      if (examType === "utme" && prev.length >= 4) {
+        toast.error("UTME combo exams allow up to 4 subjects");
         return prev;
       }
       return [...prev, s];
     });
   }
 
+  function toggleAudienceDept(d: Department) {
+    setAudienceDepts((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
+  }
+
   async function save() {
     if (!title.trim()) return toast.error("Title required");
-    if (mode === "combo" && comboSubjects.length !== 4) return toast.error("Pick exactly 4 subjects for a combo exam");
+    if (examType === "utme" && mode === "combo" && comboSubjects.length !== 4)
+      return toast.error("Pick exactly 4 subjects for a UTME combo exam");
+    if (examType === "post_utme" && mode === "combo" && comboSubjects.length < 1)
+      return toast.error("Pick at least one subject for the POST-UTME exam");
     if (requireKey && keyMode === "shared" && !productKey.trim()) return toast.error("Set a shared key or switch mode");
     if (requireKey && keyMode === "individual" && (individualCount < 1 || individualCount > 500)) {
       return toast.error("Individual key count must be between 1 and 500");
     }
+    if (!audienceAll && audienceDepts.length === 0)
+      return toast.error("Pick at least one department, or switch to 'All students'");
 
     const subjectQuestionMap: SubjectQuestionMap = {};
     let questionIds: string[] = [];
@@ -202,8 +212,13 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
 
     setBusy(true);
     try {
+      const targetScope: TargetScope = audienceAll
+        ? { kind: "all" }
+        : { kind: "departments", departments: audienceDepts };
+
       const payload: any = {
         title: title.trim(),
+        examType,
         mode,
         questionIds,
         durationMinutes: duration,
@@ -214,6 +229,7 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         createdBy,
         createdAt: serverTimestamp(),
         requiresProductKey: requireKey,
+        targetScope,
       };
       if (requireKey) {
         payload.keyMode = keyMode;
