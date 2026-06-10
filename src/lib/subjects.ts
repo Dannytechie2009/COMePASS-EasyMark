@@ -1,9 +1,10 @@
 export type Department = "science" | "commercial" | "art";
+export type Gender = "male" | "female" | "other";
 
-export const DEPARTMENTS: { id: Department; label: string }[] = [
-  { id: "science", label: "Science" },
-  { id: "commercial", label: "Commercial" },
-  { id: "art", label: "Art" },
+export const DEPARTMENTS: { id: Department; label: string; short: string }[] = [
+  { id: "science", label: "Science", short: "Sci" },
+  { id: "commercial", label: "Commercial", short: "Com" },
+  { id: "art", label: "Art", short: "Art" },
 ];
 
 export const ALL_SUBJECTS = [
@@ -18,9 +19,14 @@ export const ALL_SUBJECTS = [
   "Government",
   "Literature",
   "CRS",
+  "General Knowledge",
+  "Current Affairs",
 ] as const;
 
 export type Subject = (typeof ALL_SUBJECTS)[number];
+
+// Subjects that only appear in POST-UTME exams (hidden from UTME registration combos).
+export const POST_UTME_ONLY_SUBJECTS: Subject[] = ["General Knowledge", "Current Affairs"];
 
 // Compulsory subjects per department + the pool the student picks the rest from.
 export const DEPARTMENT_RULES: Record<

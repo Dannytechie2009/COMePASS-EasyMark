@@ -1,4 +1,4 @@
-import type { Subject } from "./subjects";
+import type { Department, Subject } from "./subjects";
 import type { Timestamp } from "firebase/firestore";
 
 export interface Question {
@@ -17,13 +17,21 @@ export interface Question {
 
 export type ExamStatus = "scheduled" | "live" | "ended" | "corrections_open";
 export type ExamMode = "single" | "combo";
+export type ExamType = "utme" | "post_utme";
 export type KeyMode = "shared" | "individual";
 
 export type SubjectQuestionMap = Partial<Record<Subject, string[]>>;
 
+// Audience targeting. Default (undefined) = all eligible students.
+export interface TargetScope {
+  kind: "all" | "departments";
+  departments?: Department[];
+}
+
 export interface ExamSession {
   id: string;
   title: string;
+  examType?: ExamType; // defaults to 'utme' when missing
   mode: ExamMode;
   subject?: Subject;
   subjects?: Subject[];
@@ -34,6 +42,7 @@ export interface ExamSession {
   keyMode?: KeyMode;
   productKey?: string;
   individualKeyCount?: number;
+  targetScope?: TargetScope;
   startAt: Timestamp;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
@@ -43,16 +52,16 @@ export interface ExamSession {
 }
 
 export interface Attempt {
-  id: string; // sessionId_uid
+  id: string;
   sessionId: string;
   uid: string;
   studentName: string;
   studentIdShort?: string;
   startedAt: Timestamp;
   endedAt?: Timestamp;
-  answers: Record<string, number>; // questionId -> chosen option index
-  questionOrder: string[]; // persisted shuffle
-  optionOrder?: Record<string, number[]>; // per-question option permutation
+  answers: Record<string, number>;
+  questionOrder: string[];
+  optionOrder?: Record<string, number[]>;
   submitted: boolean;
   autoSubmitted?: boolean;
   score?: number;
@@ -66,20 +75,30 @@ export function attemptId(sessionId: string, uid: string) {
 }
 
 export function getSessionSubjects(session: Pick<ExamSession, "mode" | "subject" | "subjects" | "subjectQuestionMap">) {
-  if (session.mode === "single") {
-    return session.subject ? [session.subject] : [];
-  }
-
+  if (session.mode === "single") return session.subject ? [session.subject] : [];
   const fromSubjects = session.subjects ?? [];
   if (fromSubjects.length > 0) return fromSubjects;
-
   return Object.keys(session.subjectQuestionMap ?? {}) as Subject[];
 }
 
 export function sessionMatchesStudent(
-  session: Pick<ExamSession, "mode" | "subject" | "subjects" | "subjectQuestionMap">,
+  session: Pick<ExamSession, "mode" | "subject" | "subjects" | "subjectQuestionMap" | "examType" | "targetScope">,
   studentSubjects: Subject[],
+  studentDepartment?: Department,
 ) {
+  // Targeting always takes precedence when set.
+  if (session.targetScope) {
+    if (session.targetScope.kind === "departments") {
+      if (!studentDepartment || !session.targetScope.departments?.includes(studentDepartment)) return false;
+    }
+    // 'all' falls through to subject check below for UTME; for post_utme it's automatic match.
+    if (session.examType === "post_utme") return true;
+  } else if (session.examType === "post_utme") {
+    // Untargeted post_utme = open to all students.
+    return true;
+  }
+
+  // UTME (default): strict subject-combo match.
   const sessionSubjects = getSessionSubjects(session);
   if (session.mode === "single") return sessionSubjects.some((subject) => studentSubjects.includes(subject));
   if (sessionSubjects.length === 0) return false;

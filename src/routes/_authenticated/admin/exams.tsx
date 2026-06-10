@@ -15,8 +15,8 @@ import {
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { ALL_SUBJECTS, type Subject } from "@/lib/subjects";
-import type { ExamMode, ExamSession, KeyMode, Question, SubjectQuestionMap } from "@/lib/exams";
+import { ALL_SUBJECTS, DEPARTMENTS, POST_UTME_ONLY_SUBJECTS, type Department, type Subject } from "@/lib/subjects";
+import type { ExamMode, ExamSession, ExamType, KeyMode, Question, SubjectQuestionMap, TargetScope } from "@/lib/exams";
 import { computeStatus, getSessionSubjects } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +103,7 @@ function randomKey() {
 }
 
 function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: string }) {
+  const [examType, setExamType] = useState<ExamType>("utme");
   const [mode, setMode] = useState<ExamMode>("single");
   const [title, setTitle] = useState("");
   const [singleSubject, setSingleSubject] = useState<Subject>("English");
@@ -121,7 +122,17 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [keyMode, setKeyMode] = useState<KeyMode>("shared");
   const [productKey, setProductKey] = useState("");
   const [individualCount, setIndividualCount] = useState(20);
+  const [audienceAll, setAudienceAll] = useState(true);
+  const [audienceDepts, setAudienceDepts] = useState<Department[]>([]);
   const [busy, setBusy] = useState(false);
+
+  // Subject list shown depends on exam type. POST-UTME adds GK & Current Affairs.
+  const subjectPool = useMemo<readonly Subject[]>(
+    () => examType === "post_utme"
+      ? ALL_SUBJECTS
+      : ALL_SUBJECTS.filter((s) => !POST_UTME_ONLY_SUBJECTS.includes(s)),
+    [examType],
+  );
 
   const activeSubjects = useMemo<Subject[]>(
     () => (mode === "single" ? [singleSubject] : comboSubjects),
@@ -164,21 +175,31 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   function toggleComboSubject(s: Subject) {
     setComboSubjects((prev) => {
       if (prev.includes(s)) return prev.filter((x) => x !== s);
-      if (prev.length >= 4) {
-        toast.error("Combo exams allow up to 4 subjects");
+      // POST-UTME allows free combos (no 4-cap); UTME keeps the strict cap of 4.
+      if (examType === "utme" && prev.length >= 4) {
+        toast.error("UTME combo exams allow up to 4 subjects");
         return prev;
       }
       return [...prev, s];
     });
   }
 
+  function toggleAudienceDept(d: Department) {
+    setAudienceDepts((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
+  }
+
   async function save() {
     if (!title.trim()) return toast.error("Title required");
-    if (mode === "combo" && comboSubjects.length !== 4) return toast.error("Pick exactly 4 subjects for a combo exam");
+    if (examType === "utme" && mode === "combo" && comboSubjects.length !== 4)
+      return toast.error("Pick exactly 4 subjects for a UTME combo exam");
+    if (examType === "post_utme" && mode === "combo" && comboSubjects.length < 1)
+      return toast.error("Pick at least one subject for the POST-UTME exam");
     if (requireKey && keyMode === "shared" && !productKey.trim()) return toast.error("Set a shared key or switch mode");
     if (requireKey && keyMode === "individual" && (individualCount < 1 || individualCount > 500)) {
       return toast.error("Individual key count must be between 1 and 500");
     }
+    if (!audienceAll && audienceDepts.length === 0)
+      return toast.error("Pick at least one department, or switch to 'All students'");
 
     const subjectQuestionMap: SubjectQuestionMap = {};
     let questionIds: string[] = [];
@@ -191,8 +212,13 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
 
     setBusy(true);
     try {
+      const targetScope: TargetScope = audienceAll
+        ? { kind: "all" }
+        : { kind: "departments", departments: audienceDepts };
+
       const payload: any = {
         title: title.trim(),
+        examType,
         mode,
         questionIds,
         durationMinutes: duration,
@@ -203,6 +229,7 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         createdBy,
         createdAt: serverTimestamp(),
         requiresProductKey: requireKey,
+        targetScope,
       };
       if (requireKey) {
         payload.keyMode = keyMode;
@@ -249,21 +276,31 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
 
   return (
     <div className="rounded-2xl border p-5 space-y-5 bg-card shadow-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-semibold text-lg">New exam</h2>
-        <div className="inline-flex rounded-lg border p-1 text-sm">
-          <button
-            type="button"
-            onClick={() => setMode("single")}
-            className={`px-3 py-1 rounded-md ${mode === "single" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >Single subject</button>
-          <button
-            type="button"
-            onClick={() => setMode("combo")}
-            className={`px-3 py-1 rounded-md ${mode === "combo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >JAMB combo (4)</button>
+        <div className="flex flex-wrap gap-2">
+          <div className="inline-flex rounded-lg border p-1 text-xs">
+            <button type="button" onClick={() => setExamType("utme")}
+              className={`px-3 py-1.5 rounded-md ${examType === "utme" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>UTME</button>
+            <button type="button" onClick={() => setExamType("post_utme")}
+              className={`px-3 py-1.5 rounded-md ${examType === "post_utme" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>POST-UTME</button>
+          </div>
+          <div className="inline-flex rounded-lg border p-1 text-xs">
+            <button type="button" onClick={() => setMode("single")}
+              className={`px-3 py-1.5 rounded-md ${mode === "single" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Single subject</button>
+            <button type="button" onClick={() => setMode("combo")}
+              className={`px-3 py-1.5 rounded-md ${mode === "combo" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+              {examType === "utme" ? "JAMB combo (4)" : "Multi-subject"}
+            </button>
+          </div>
         </div>
       </div>
+
+      {examType === "post_utme" && (
+        <p className="text-xs rounded-lg bg-secondary/10 border border-secondary/30 text-secondary-foreground px-3 py-2">
+          POST-UTME mode: pick any subjects (including General Knowledge & Current Affairs). Strict UTME combinations are not enforced.
+        </p>
+      )}
 
       <div className="grid sm:grid-cols-2 gap-3">
         <div className="space-y-2 sm:col-span-2">
@@ -279,14 +316,14 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
               value={singleSubject}
               onChange={(e) => setSingleSubject(e.target.value as Subject)}
             >
-              {ALL_SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+              {subjectPool.map((s) => <option key={s}>{s}</option>)}
             </select>
           </div>
         ) : (
           <div className="space-y-2 sm:col-span-2">
-            <Label>Subjects ({comboSubjects.length}/4)</Label>
+            <Label>Subjects ({comboSubjects.length}{examType === "utme" ? "/4" : ""})</Label>
             <div className="flex flex-wrap gap-2">
-              {ALL_SUBJECTS.map((s) => {
+              {subjectPool.map((s) => {
                 const on = comboSubjects.includes(s);
                 return (
                   <button
@@ -318,6 +355,34 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         <label className="flex items-center gap-2">
           <Checkbox checked={shuffleOptions} onCheckedChange={(v) => setShuffleOptions(!!v)} /> Shuffle options
         </label>
+      </div>
+
+      <div className="rounded-xl border p-4 space-y-3">
+        <Label className="text-sm font-medium">Who can take this exam?</Label>
+        <div className="inline-flex rounded-lg border p-1 text-xs">
+          <button type="button" onClick={() => setAudienceAll(true)}
+            className={`px-3 py-1.5 rounded-md ${audienceAll ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>All eligible students</button>
+          <button type="button" onClick={() => setAudienceAll(false)}
+            className={`px-3 py-1.5 rounded-md ${!audienceAll ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Specific departments</button>
+        </div>
+        {!audienceAll && (
+          <div className="flex flex-wrap gap-2">
+            {DEPARTMENTS.map((d) => {
+              const on = audienceDepts.includes(d.id);
+              return (
+                <button key={d.id} type="button" onClick={() => toggleAudienceDept(d.id)}
+                  className={`rounded-full border px-3 py-1 text-xs ${on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"}`}>
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {examType === "post_utme"
+            ? "POST-UTME ignores strict subject combos — choose one or more departments, or open it to everyone."
+            : "UTME also checks the student's subject combination matches the exam."}
+        </p>
       </div>
 
       <div className="rounded-xl border p-4 space-y-3">
