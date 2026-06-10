@@ -41,8 +41,8 @@ function StudentHome() {
   }, [profile?.subjects]);
 
   const visibleSessions = useMemo(
-    () => sessions.filter((session) => sessionMatchesStudent(session, profile?.subjects ?? [])),
-    [sessions, profile?.subjects],
+    () => sessions.filter((session) => sessionMatchesStudent(session, profile?.subjects ?? [], profile?.department)),
+    [sessions, profile?.subjects, profile?.department],
   );
 
   const upcomingCount = visibleSessions.filter((session) => computeStatus(session) === "scheduled").length;

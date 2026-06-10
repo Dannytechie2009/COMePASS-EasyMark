@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -19,11 +21,14 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedStudentIndexRouteImport } from './routes/_authenticated/student/index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedStudentResultsRouteImport } from './routes/_authenticated/student/results'
+import { Route as AuthenticatedStudentAnnouncementsRouteImport } from './routes/_authenticated/student/announcements'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminSyllabusRouteImport } from './routes/_authenticated/admin/syllabus'
 import { Route as AuthenticatedAdminQuestionsRouteImport } from './routes/_authenticated/admin/questions'
+import { Route as AuthenticatedAdminLegalRouteImport } from './routes/_authenticated/admin/legal'
 import { Route as AuthenticatedAdminExamsRouteImport } from './routes/_authenticated/admin/exams'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
+import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin/announcements'
 import { Route as AuthenticatedStudentExamSessionIdRouteImport } from './routes/_authenticated/student/exam.$sessionId'
 import { Route as AuthenticatedAdminExamsSessionIdRouteImport } from './routes/_authenticated/admin/exams.$sessionId'
 import { Route as AuthenticatedStudentExamSessionIdResultRouteImport } from './routes/_authenticated/student/exam.$sessionId.result'
@@ -33,9 +38,19 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -79,6 +94,12 @@ const AuthenticatedStudentResultsRoute =
     path: '/student/results',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedStudentAnnouncementsRoute =
+  AuthenticatedStudentAnnouncementsRouteImport.update({
+    id: '/student/announcements',
+    path: '/student/announcements',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -96,6 +117,11 @@ const AuthenticatedAdminQuestionsRoute =
     path: '/admin/questions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminLegalRoute = AuthenticatedAdminLegalRouteImport.update({
+  id: '/admin/legal',
+  path: '/admin/legal',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminExamsRoute = AuthenticatedAdminExamsRouteImport.update({
   id: '/admin/exams',
   path: '/admin/exams',
@@ -105,6 +131,12 @@ const AuthenticatedAdminDepartmentsRoute =
   AuthenticatedAdminDepartmentsRouteImport.update({
     id: '/admin/departments',
     path: '/admin/departments',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminAnnouncementsRoute =
+  AuthenticatedAdminAnnouncementsRouteImport.update({
+    id: '/admin/announcements',
+    path: '/admin/announcements',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedStudentExamSessionIdRoute =
@@ -130,14 +162,19 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/admin/legal': typeof AuthenticatedAdminLegalRoute
   '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/admin/syllabus': typeof AuthenticatedAdminSyllabusRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/student/announcements': typeof AuthenticatedStudentAnnouncementsRoute
   '/student/results': typeof AuthenticatedStudentResultsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/student/': typeof AuthenticatedStudentIndexRoute
@@ -149,14 +186,19 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/admin/legal': typeof AuthenticatedAdminLegalRoute
   '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/admin/syllabus': typeof AuthenticatedAdminSyllabusRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/student/announcements': typeof AuthenticatedStudentAnnouncementsRoute
   '/student/results': typeof AuthenticatedStudentResultsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/student': typeof AuthenticatedStudentIndexRoute
@@ -170,14 +212,19 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/_authenticated/admin/legal': typeof AuthenticatedAdminLegalRoute
   '/_authenticated/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/_authenticated/admin/syllabus': typeof AuthenticatedAdminSyllabusRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/student/announcements': typeof AuthenticatedStudentAnnouncementsRoute
   '/_authenticated/student/results': typeof AuthenticatedStudentResultsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
@@ -191,14 +238,19 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/login'
+    | '/privacy'
     | '/register'
+    | '/terms'
     | '/verify-email'
     | '/settings'
+    | '/admin/announcements'
     | '/admin/departments'
     | '/admin/exams'
+    | '/admin/legal'
     | '/admin/questions'
     | '/admin/syllabus'
     | '/admin/users'
+    | '/student/announcements'
     | '/student/results'
     | '/admin/'
     | '/student/'
@@ -210,14 +262,19 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/login'
+    | '/privacy'
     | '/register'
+    | '/terms'
     | '/verify-email'
     | '/settings'
+    | '/admin/announcements'
     | '/admin/departments'
     | '/admin/exams'
+    | '/admin/legal'
     | '/admin/questions'
     | '/admin/syllabus'
     | '/admin/users'
+    | '/student/announcements'
     | '/student/results'
     | '/admin'
     | '/student'
@@ -230,14 +287,19 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/forgot-password'
     | '/login'
+    | '/privacy'
     | '/register'
+    | '/terms'
     | '/verify-email'
     | '/_authenticated/settings'
+    | '/_authenticated/admin/announcements'
     | '/_authenticated/admin/departments'
     | '/_authenticated/admin/exams'
+    | '/_authenticated/admin/legal'
     | '/_authenticated/admin/questions'
     | '/_authenticated/admin/syllabus'
     | '/_authenticated/admin/users'
+    | '/_authenticated/student/announcements'
     | '/_authenticated/student/results'
     | '/_authenticated/admin/'
     | '/_authenticated/student/'
@@ -251,7 +313,9 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
+  TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
 }
 
@@ -264,11 +328,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -327,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentResultsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/student/announcements': {
+      id: '/_authenticated/student/announcements'
+      path: '/student/announcements'
+      fullPath: '/student/announcements'
+      preLoaderRoute: typeof AuthenticatedStudentAnnouncementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/admin/users'
@@ -348,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminQuestionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/legal': {
+      id: '/_authenticated/admin/legal'
+      path: '/admin/legal'
+      fullPath: '/admin/legal'
+      preLoaderRoute: typeof AuthenticatedAdminLegalRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/exams': {
       id: '/_authenticated/admin/exams'
       path: '/admin/exams'
@@ -360,6 +452,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/departments'
       fullPath: '/admin/departments'
       preLoaderRoute: typeof AuthenticatedAdminDepartmentsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin/announcements': {
+      id: '/_authenticated/admin/announcements'
+      path: '/admin/announcements'
+      fullPath: '/admin/announcements'
+      preLoaderRoute: typeof AuthenticatedAdminAnnouncementsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/student/exam/$sessionId': {
@@ -418,11 +517,14 @@ const AuthenticatedStudentExamSessionIdRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedAdminAnnouncementsRoute: typeof AuthenticatedAdminAnnouncementsRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
   AuthenticatedAdminExamsRoute: typeof AuthenticatedAdminExamsRouteWithChildren
+  AuthenticatedAdminLegalRoute: typeof AuthenticatedAdminLegalRoute
   AuthenticatedAdminQuestionsRoute: typeof AuthenticatedAdminQuestionsRoute
   AuthenticatedAdminSyllabusRoute: typeof AuthenticatedAdminSyllabusRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedStudentAnnouncementsRoute: typeof AuthenticatedStudentAnnouncementsRoute
   AuthenticatedStudentResultsRoute: typeof AuthenticatedStudentResultsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedStudentIndexRoute: typeof AuthenticatedStudentIndexRoute
@@ -431,11 +533,15 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedAdminAnnouncementsRoute: AuthenticatedAdminAnnouncementsRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
   AuthenticatedAdminExamsRoute: AuthenticatedAdminExamsRouteWithChildren,
+  AuthenticatedAdminLegalRoute: AuthenticatedAdminLegalRoute,
   AuthenticatedAdminQuestionsRoute: AuthenticatedAdminQuestionsRoute,
   AuthenticatedAdminSyllabusRoute: AuthenticatedAdminSyllabusRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedStudentAnnouncementsRoute:
+    AuthenticatedStudentAnnouncementsRoute,
   AuthenticatedStudentResultsRoute: AuthenticatedStudentResultsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedStudentIndexRoute: AuthenticatedStudentIndexRoute,
@@ -452,7 +558,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
+  TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
 }
 export const routeTree = rootRouteImport

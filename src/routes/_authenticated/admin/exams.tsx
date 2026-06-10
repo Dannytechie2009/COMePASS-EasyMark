@@ -15,8 +15,8 @@ import {
 } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { ALL_SUBJECTS, type Subject } from "@/lib/subjects";
-import type { ExamMode, ExamSession, KeyMode, Question, SubjectQuestionMap } from "@/lib/exams";
+import { ALL_SUBJECTS, DEPARTMENTS, POST_UTME_ONLY_SUBJECTS, type Department, type Subject } from "@/lib/subjects";
+import type { ExamMode, ExamSession, ExamType, KeyMode, Question, SubjectQuestionMap, TargetScope } from "@/lib/exams";
 import { computeStatus, getSessionSubjects } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
