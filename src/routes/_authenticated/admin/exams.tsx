@@ -358,6 +358,34 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
       </div>
 
       <div className="rounded-xl border p-4 space-y-3">
+        <Label className="text-sm font-medium">Who can take this exam?</Label>
+        <div className="inline-flex rounded-lg border p-1 text-xs">
+          <button type="button" onClick={() => setAudienceAll(true)}
+            className={`px-3 py-1.5 rounded-md ${audienceAll ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>All eligible students</button>
+          <button type="button" onClick={() => setAudienceAll(false)}
+            className={`px-3 py-1.5 rounded-md ${!audienceAll ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Specific departments</button>
+        </div>
+        {!audienceAll && (
+          <div className="flex flex-wrap gap-2">
+            {DEPARTMENTS.map((d) => {
+              const on = audienceDepts.includes(d.id);
+              return (
+                <button key={d.id} type="button" onClick={() => toggleAudienceDept(d.id)}
+                  className={`rounded-full border px-3 py-1 text-xs ${on ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"}`}>
+                  {d.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          {examType === "post_utme"
+            ? "POST-UTME ignores strict subject combos — choose one or more departments, or open it to everyone."
+            : "UTME also checks the student's subject combination matches the exam."}
+        </p>
+      </div>
+
+      <div className="rounded-xl border p-4 space-y-3">
         <label className="flex items-center gap-2 text-sm font-medium">
           <Checkbox checked={requireKey} onCheckedChange={(v) => setRequireKey(!!v)} />
           Require a product key (PIN) to start this exam
