@@ -9,6 +9,7 @@ import {
   generateStudentId,
   validateCombination,
   type Department,
+  type Gender,
   type Subject,
 } from "@/lib/subjects";
 import { Button } from "@/components/ui/button";
@@ -26,13 +27,13 @@ function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [gender, setGender] = useState<Gender | "">("");
   const [department, setDepartment] = useState<Department>("science");
   const [selected, setSelected] = useState<Subject[]>([]);
   const [busy, setBusy] = useState(false);
 
   const rule = DEPARTMENT_RULES[department];
   const subjects = useMemo<Subject[]>(() => {
-    // Auto-include required, let user pick rest
     return Array.from(new Set([...rule.required, ...selected.filter((s) => rule.pickFrom.includes(s))]));
   }, [department, selected, rule]);
 
@@ -47,6 +48,7 @@ function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!gender) return toast.error("Please select your gender");
     const check = validateCombination(department, subjects);
     if (!check.ok) {
       toast.error(check.reason);
@@ -58,7 +60,6 @@ function RegisterPage() {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       await updateProfile(cred.user, { displayName: name });
 
-      // Generate unique student ID via transaction (retry if collision)
       const db = getDb();
       let studentId = "";
       for (let i = 0; i < 5; i++) {
@@ -85,6 +86,7 @@ function RegisterPage() {
         department,
         subjects,
         studentId,
+        gender,
         emailVerified: false,
         createdAt: serverTimestamp(),
       });
@@ -105,8 +107,8 @@ function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen grid place-items-center p-6 bg-background">
-      <form onSubmit={handleSubmit} className="w-full max-w-lg space-y-5 rounded-lg border p-6">
+    <div className="min-h-screen grid place-items-center p-4 sm:p-6 bg-background">
+      <form onSubmit={handleSubmit} className="w-full max-w-lg space-y-5 rounded-lg border p-5 sm:p-6">
         <div>
           <h1 className="text-2xl font-bold">Create student account</h1>
           <p className="text-sm text-muted-foreground">You'll get a student ID after registering.</p>
@@ -117,13 +119,31 @@ function RegisterPage() {
             <Label htmlFor="name">Full name</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 col-span-2 sm:col-span-1">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 col-span-2 sm:col-span-1">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Gender</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {(["male", "female", "other"] as const).map((g) => (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGender(g)}
+                className={`rounded-md border px-2 py-2 text-sm capitalize transition-colors ${
+                  gender === g ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
+                }`}
+              >
+                {g}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -135,9 +155,10 @@ function RegisterPage() {
                 key={d.id}
                 type="button"
                 onClick={() => changeDept(d.id)}
-                className={`rounded-md border px-3 py-2 text-sm transition-colors ${
+                className={`min-w-0 truncate rounded-md border px-2 py-2 text-xs sm:text-sm transition-colors ${
                   department === d.id ? "bg-primary text-primary-foreground border-primary" : "hover:bg-accent"
                 }`}
+                title={d.label}
               >
                 {d.label}
               </button>
@@ -172,6 +193,11 @@ function RegisterPage() {
         <Button type="submit" disabled={busy} className="w-full">
           {busy ? "Creating account…" : "Create account"}
         </Button>
+        <p className="text-center text-xs text-muted-foreground">
+          By creating an account you agree to our{" "}
+          <Link to="/terms" className="underline">Terms</Link> and{" "}
+          <Link to="/privacy" className="underline">Privacy Policy</Link>.
+        </p>
         <p className="text-center text-sm text-muted-foreground">
           Have an account? <Link to="/login" className="underline">Log in</Link>
         </p>
