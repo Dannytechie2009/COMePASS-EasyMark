@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebaseAuth, getDb, isFirebaseConfigured } from "./firebase";
-import type { Department, Subject } from "./subjects";
+import type { Department, Gender, Subject } from "./subjects";
 
 export type Role = "student" | "tutor" | "super_admin";
 
@@ -14,6 +14,8 @@ export interface UserProfile {
   department?: Department;
   subjects?: Subject[];
   studentId?: string;
+  gender?: Gender;
+  acknowledgedLegal?: { privacy?: number; terms?: number };
   createdAt?: number;
 }
 
@@ -42,22 +44,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const auth = getFirebaseAuth();
-    const unsub = onAuthStateChanged(auth, async (u) => {
+    let unsubProfile: (() => void) | undefined;
+    const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
+      unsubProfile?.();
+      unsubProfile = undefined;
       if (u) {
-        try {
-          const snap = await getDoc(doc(getDb(), "users", u.uid));
-          setProfile(snap.exists() ? ({ uid: u.uid, ...(snap.data() as Omit<UserProfile, "uid">) }) : null);
-        } catch (e) {
-          console.error("Failed to load profile", e);
-          setProfile(null);
-        }
+        // Live profile so gender/legal acknowledgement updates immediately.
+        unsubProfile = onSnapshot(
+          doc(getDb(), "users", u.uid),
+          (snap) => {
+            setProfile(snap.exists() ? ({ uid: u.uid, ...(snap.data() as Omit<UserProfile, "uid">) }) : null);
+            setLoading(false);
+          },
+          (err) => {
+            console.error("Failed to load profile", err);
+            setProfile(null);
+            setLoading(false);
+          },
+        );
       } else {
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return unsub;
+    return () => {
+      unsub();
+      unsubProfile?.();
+    };
   }, []);
 
   return (
