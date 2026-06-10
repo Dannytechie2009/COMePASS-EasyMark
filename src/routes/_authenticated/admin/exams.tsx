@@ -103,6 +103,7 @@ function randomKey() {
 }
 
 function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: string }) {
+  const [examType, setExamType] = useState<ExamType>("utme");
   const [mode, setMode] = useState<ExamMode>("single");
   const [title, setTitle] = useState("");
   const [singleSubject, setSingleSubject] = useState<Subject>("English");
@@ -121,7 +122,17 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [keyMode, setKeyMode] = useState<KeyMode>("shared");
   const [productKey, setProductKey] = useState("");
   const [individualCount, setIndividualCount] = useState(20);
+  const [audienceAll, setAudienceAll] = useState(true);
+  const [audienceDepts, setAudienceDepts] = useState<Department[]>([]);
   const [busy, setBusy] = useState(false);
+
+  // Subject list shown depends on exam type. POST-UTME adds GK & Current Affairs.
+  const subjectPool = useMemo<readonly Subject[]>(
+    () => examType === "post_utme"
+      ? ALL_SUBJECTS
+      : ALL_SUBJECTS.filter((s) => !POST_UTME_ONLY_SUBJECTS.includes(s)),
+    [examType],
+  );
 
   const activeSubjects = useMemo<Subject[]>(
     () => (mode === "single" ? [singleSubject] : comboSubjects),
