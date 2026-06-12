@@ -111,6 +111,7 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [bank, setBank] = useState<Record<Subject, Question[]>>({} as Record<Subject, Question[]>);
   const [selectedBySubject, setSelectedBySubject] = useState<Record<Subject, Set<string>>>({} as Record<Subject, Set<string>>);
   const [duration, setDuration] = useState(30);
+  const [availability, setAvailability] = useState(180); // minutes the window stays open
   const [startAt, setStartAt] = useState(() => {
     const d = new Date(Date.now() + 5 * 60_000);
     d.setSeconds(0, 0);
@@ -222,6 +223,7 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         mode,
         questionIds,
         durationMinutes: duration,
+        availabilityMinutes: Math.max(duration, availability),
         startAt: Timestamp.fromDate(new Date(startAt)),
         shuffleQuestions,
         shuffleOptions,
@@ -339,10 +341,16 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         )}
 
         <div className="space-y-2">
-          <Label>Duration (min)</Label>
+          <Label>Per-student time limit (min)</Label>
           <Input type="number" min={1} value={duration} onChange={(e) => setDuration(Number(e.target.value))} />
+          <p className="text-[11px] text-muted-foreground">Each candidate's countdown once they start.</p>
         </div>
         <div className="space-y-2">
+          <Label>Availability window (min)</Label>
+          <Input type="number" min={duration} value={availability} onChange={(e) => setAvailability(Number(e.target.value))} />
+          <p className="text-[11px] text-muted-foreground">How long the exam stays open from the start time.</p>
+        </div>
+        <div className="space-y-2 sm:col-span-2">
           <Label>Start at</Label>
           <Input type="datetime-local" value={startAt} onChange={(e) => setStartAt(e.target.value)} />
         </div>

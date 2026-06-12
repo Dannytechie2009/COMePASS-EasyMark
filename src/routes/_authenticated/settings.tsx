@@ -1,13 +1,26 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
-import { updateProfile as updateAuthProfile } from "firebase/auth";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateProfile as updateAuthProfile,
+} from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
 import { getDb, getFirebaseAuth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Settings as SettingsIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Gender } from "@/lib/subjects";
 
@@ -17,11 +30,49 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const { profile, user } = useAuth();
+  const nav = useNavigate();
   const [name, setName] = useState(profile?.name ?? "");
   const [gender, setGender] = useState<Gender | "">(profile?.gender ?? "");
   const [busy, setBusy] = useState(false);
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   if (!profile) return null;
+
+  async function deleteMyAccount() {
+    if (!user) return;
+    if (!confirm("This permanently deletes your account, profile, and all exam history. Continue?")) return;
+    setDeleting(true);
+    try {
+      // Re-authenticate (required by Firebase for sensitive ops on older sessions)
+      if (confirmPwd && user.email) {
+        const cred = EmailAuthProvider.credential(user.email, confirmPwd);
+        try { await reauthenticateWithCredential(user, cred); } catch (e: any) {
+          throw new Error(e?.message ?? "Wrong password");
+        }
+      }
+      // Wipe exam attempts
+      const snap = await getDocs(query(collection(getDb(), "attempts"), where("uid", "==", user.uid)));
+      const batch = writeBatch(getDb());
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      batch.delete(doc(getDb(), "users", user.uid));
+      await batch.commit();
+      // Delete auth user
+      await deleteUser(user);
+      toast.success("Account deleted");
+      nav({ to: "/" });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      if (msg.includes("requires-recent-login")) {
+        toast.error("Please enter your password above and try again.");
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
 
   async function save() {
     if (!name.trim()) return toast.error("Name is required");
@@ -108,6 +159,25 @@ function SettingsPage() {
         <div className="flex gap-2 pt-2">
           <Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5 shadow-sm space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-destructive/10 text-destructive p-2"><Trash2 className="size-5" /></div>
+          <div>
+            <h2 className="font-semibold">Delete account</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Permanently removes your profile, exam attempts, and login. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        <div className="space-y-2 max-w-sm">
+          <Label className="text-xs">Confirm with your password</Label>
+          <Input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Your current password" />
+        </div>
+        <Button variant="destructive" disabled={deleting} onClick={deleteMyAccount}>
+          {deleting ? "Deleting…" : "Delete my account"}
+        </Button>
       </div>
     </div>
   );

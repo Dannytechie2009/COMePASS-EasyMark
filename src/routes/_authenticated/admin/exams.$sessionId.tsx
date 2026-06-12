@@ -5,7 +5,9 @@ import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Attempt, ExamSession } from "@/lib/exams";
 import { computeStatus, getSessionSubjects } from "@/lib/exams";
+import { listenReviewsForSession, type Review } from "@/lib/reviews";
 import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/exams/$sessionId")({
@@ -28,6 +30,7 @@ function SessionDetail() {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [keys, setKeys] = useState<KeyDoc[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     const unsub1 = onSnapshot(doc(getDb(), "examSessions", sessionId), (s) => {
@@ -42,7 +45,8 @@ function SessionDetail() {
       collection(getDb(), "examSessions", sessionId, "productKeys"),
       (snap) => setKeys(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
     );
-    return () => { unsub1(); unsub2(); unsub3(); };
+    const unsub4 = listenReviewsForSession(sessionId, setReviews);
+    return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   }, [sessionId]);
 
   if (!session) return <div className="text-muted-foreground">Loading…</div>;
@@ -65,9 +69,14 @@ function SessionDetail() {
         <Link to="/admin/exams" className="text-sm text-muted-foreground hover:underline">← All exams</Link>
         <h1 className="text-2xl sm:text-3xl font-bold mt-2">{session.title}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min
+          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min per student
         </p>
-        <p className="text-xs text-muted-foreground">Starts {session.startAt.toDate().toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground">
+          Starts {session.startAt.toDate().toLocaleString()}
+          {session.availabilityMinutes && (
+            <> · open for {session.availabilityMinutes} min (closes {new Date(session.startAt.toMillis() + session.availabilityMinutes * 60_000).toLocaleString()})</>
+          )}
+        </p>
         <p className="text-sm mt-2">Status: <span className="font-medium">{status}</span></p>
       </div>
 
@@ -147,6 +156,36 @@ function SessionDetail() {
               <div className="font-mono shrink-0">
                 {a.submitted ? `${a.score}/${a.totalPossible}` : "—"}
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border bg-card shadow-sm">
+        <div className="p-4 border-b flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold">Student reviews ({reviews.length})</h2>
+            <p className="text-xs text-muted-foreground">
+              Average rating: {reviews.length
+                ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+                : "—"} / 5
+            </p>
+          </div>
+          <Star className="size-5 text-amber-500" fill="currentColor" />
+        </div>
+        <div className="divide-y">
+          {reviews.length === 0 && <p className="p-4 text-sm text-muted-foreground">No reviews yet.</p>}
+          {reviews.map((r) => (
+            <div key={r.id} className="p-4 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-sm">{r.studentName}</span>
+                <span className="flex items-center gap-0.5 text-amber-500">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="size-3.5" fill={i < r.rating ? "currentColor" : "none"} />
+                  ))}
+                </span>
+              </div>
+              {r.comment && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.comment}</p>}
             </div>
           ))}
         </div>

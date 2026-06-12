@@ -37,7 +37,9 @@ export interface ExamSession {
   subjects?: Subject[];
   subjectQuestionMap?: SubjectQuestionMap;
   questionIds: string[];
-  durationMinutes: number;
+  durationMinutes: number; // per-student time limit
+  /** Window (minutes) the exam stays open from startAt. Falls back to durationMinutes. */
+  availabilityMinutes?: number;
   requiresProductKey?: boolean;
   keyMode?: KeyMode;
   productKey?: string;
@@ -114,10 +116,11 @@ export function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-export function computeStatus(s: { status: ExamStatus; startAt: Timestamp; durationMinutes: number }): ExamStatus {
+export function computeStatus(s: { status: ExamStatus; startAt: Timestamp; durationMinutes: number; availabilityMinutes?: number }): ExamStatus {
   if (s.status === "corrections_open" || s.status === "ended") return s.status;
   const start = s.startAt.toMillis();
-  const end = start + s.durationMinutes * 60_000;
+  const windowMinutes = s.availabilityMinutes ?? s.durationMinutes;
+  const end = start + windowMinutes * 60_000;
   const now = Date.now();
   if (now < start) return "scheduled";
   if (now < end) return "live";

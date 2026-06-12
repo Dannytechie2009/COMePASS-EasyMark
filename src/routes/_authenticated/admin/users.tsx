@@ -1,12 +1,22 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth, type Role } from "@/lib/auth-context";
 import type { Department, Subject } from "@/lib/subjects";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Shield, GraduationCap, UserCog } from "lucide-react";
+import { Search, Shield, GraduationCap, UserCog, Eraser, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserDoc {
@@ -76,6 +86,34 @@ function UsersPage() {
     }
   }
 
+  async function clearHistory(uid: string, name: string) {
+    if (!confirm(`Delete ALL exam attempts for ${name}? This can't be undone.`)) return;
+    try {
+      const snap = await getDocs(query(collection(getDb(), "attempts"), where("uid", "==", uid)));
+      const batch = writeBatch(getDb());
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      toast.success(`Cleared ${snap.size} attempt${snap.size === 1 ? "" : "s"}`);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  }
+
+  async function deleteAccount(uid: string, name: string) {
+    if (!confirm(`HARD DELETE ${name}? Their profile and exam history will be removed. Their auth login must be removed manually in Firebase Console.`)) return;
+    try {
+      // delete attempts
+      const snap = await getDocs(query(collection(getDb(), "attempts"), where("uid", "==", uid)));
+      const batch = writeBatch(getDb());
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      batch.delete(doc(getDb(), "users", uid));
+      await batch.commit();
+      toast.success("Profile & history deleted. Remove auth user in Firebase Console.");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border bg-card p-6 shadow-sm">
@@ -120,6 +158,7 @@ function UsersPage() {
                 <th className="text-left px-4 py-3 hidden md:table-cell">Department</th>
                 <th className="text-left px-4 py-3 hidden lg:table-cell">Subjects</th>
                 <th className="text-left px-4 py-3">Role</th>
+                <th className="text-left px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -151,11 +190,33 @@ function UsersPage() {
                       <option value="super_admin">Super admin</option>
                     </select>
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Clear exam history"
+                        onClick={() => clearHistory(u.uid, u.name)}
+                      >
+                        <Eraser className="size-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        title="Delete account"
+                        disabled={u.uid === profile?.uid}
+                        onClick={() => deleteAccount(u.uid, u.name)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">No users match your filters.</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">No users match your filters.</td>
                 </tr>
               )}
             </tbody>

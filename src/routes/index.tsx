@@ -505,14 +505,26 @@ function Faq() {
 /* ---------- Contact ---------- */
 function Contact() {
   const [form, setForm] = useState({ name: "", email: "", message: "" });
-  const onSubmit = (e: React.FormEvent) => {
+  const [busy, setBusy] = useState(false);
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.email.includes("@") || form.message.trim().length < 10) {
-      toast.error("Please fill in all fields correctly.");
-      return;
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const message = form.message.trim();
+    if (name.length < 2 || name.length > 100) return toast.error("Please enter your name.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255) return toast.error("Please enter a valid email.");
+    if (message.length < 10 || message.length > 2000) return toast.error("Message must be 10–2000 characters.");
+    setBusy(true);
+    try {
+      const { sendContactMessage } = await import("@/lib/contact");
+      await sendContactMessage({ name, email, message });
+      toast.success("Thanks! We'll get back to you within 24 hours.");
+      setForm({ name: "", email: "", message: "" });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Couldn't send message. Try again.");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Thanks! We'll get back to you within 24 hours.");
-    setForm({ name: "", email: "", message: "" });
   };
   return (
     <section id="contact" className="py-20 lg:py-28 bg-[var(--muted)]">
@@ -563,8 +575,8 @@ function Contact() {
               required
             />
           </div>
-          <Button type="submit" className="w-full h-11 text-base shadow-sm">
-            Send message
+          <Button type="submit" disabled={busy} className="w-full h-11 text-base shadow-sm">
+            {busy ? "Sending…" : "Send message"}
           </Button>
         </form>
       </div>

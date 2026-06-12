@@ -9,11 +9,15 @@ import {
   getDocs,
   documentId,
 } from "firebase/firestore";
-import { TrendingUp, TrendingDown, Lightbulb, Trophy } from "lucide-react";
+import { TrendingUp, TrendingDown, Lightbulb, Trophy, Star } from "lucide-react";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { attemptId, type Attempt, type ExamSession, type Question } from "@/lib/exams";
 import { fetchTopicsBySubject, type Topic } from "@/lib/syllabus";
+import { createReview, hasReviewed } from "@/lib/reviews";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/student/exam/$sessionId/result")({
   component: ResultPage,
@@ -137,6 +141,8 @@ function ResultPage() {
         <p className="text-5xl font-bold mt-2">{attempt.score}<span className="text-2xl text-muted-foreground">/{attempt.totalPossible}</span></p>
         <p className="text-muted-foreground mt-2">{pct}%</p>
       </div>
+
+      <ReviewSection sessionId={sessionId} sessionTitle={session.title} />
 
       {attempt.breakdown && Object.keys(attempt.breakdown).length > 1 && (
         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
@@ -300,6 +306,83 @@ function ResultPage() {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function ReviewSection({ sessionId, sessionTitle }: { sessionId: string; sessionTitle: string }) {
+  const { profile } = useAuth();
+  const [already, setAlready] = useState<boolean | null>(null);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    hasReviewed(sessionId, profile.uid).then(setAlready).catch(() => setAlready(false));
+  }, [sessionId, profile]);
+
+  if (!profile || already === null) return null;
+  if (already) {
+    return (
+      <div className="rounded-2xl border bg-card p-5 shadow-sm text-sm text-muted-foreground text-center">
+        Thanks — you've already rated this exam.
+      </div>
+    );
+  }
+
+  async function submit() {
+    if (rating < 1 || rating > 5) return toast.error("Please pick a star rating.");
+    if (comment.length > 500) return toast.error("Comment must be 500 characters or fewer.");
+    setBusy(true);
+    try {
+      await createReview({
+        sessionId,
+        sessionTitle,
+        uid: profile!.uid,
+        studentName: profile!.name,
+        rating,
+        comment: comment.trim(),
+      });
+      toast.success("Thanks for the feedback!");
+      setAlready(true);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-3">
+      <div className="flex items-center gap-2">
+        <Star className="size-4 text-amber-500" fill="currentColor" />
+        <h3 className="font-semibold">Rate this exam</h3>
+      </div>
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => setRating(n)}
+            aria-label={`${n} star${n === 1 ? "" : "s"}`}
+            className="p-1"
+          >
+            <Star
+              className={`size-7 transition-colors ${n <= rating ? "text-amber-500" : "text-muted-foreground"}`}
+              fill={n <= rating ? "currentColor" : "none"}
+            />
+          </button>
+        ))}
+      </div>
+      <Textarea
+        rows={3}
+        value={comment}
+        maxLength={500}
+        onChange={(e) => setComment(e.target.value)}
+        placeholder="Optional: what worked, what could be better?"
+      />
+      <Button onClick={submit} disabled={busy || rating === 0}>{busy ? "Sending…" : "Submit review"}</Button>
     </div>
   );
 }
