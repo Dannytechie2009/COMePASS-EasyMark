@@ -65,9 +65,14 @@ function SessionDetail() {
         <Link to="/admin/exams" className="text-sm text-muted-foreground hover:underline">← All exams</Link>
         <h1 className="text-2xl sm:text-3xl font-bold mt-2">{session.title}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min
+          {getSessionSubjects(session).join(" + ")} · {session.questionIds.length} questions · {session.durationMinutes} min per student
         </p>
-        <p className="text-xs text-muted-foreground">Starts {session.startAt.toDate().toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground">
+          Starts {session.startAt.toDate().toLocaleString()}
+          {session.availabilityMinutes && (
+            <> · open for {session.availabilityMinutes} min (closes {new Date(session.startAt.toMillis() + session.availabilityMinutes * 60_000).toLocaleString()})</>
+          )}
+        </p>
         <p className="text-sm mt-2">Status: <span className="font-medium">{status}</span></p>
       </div>
 
