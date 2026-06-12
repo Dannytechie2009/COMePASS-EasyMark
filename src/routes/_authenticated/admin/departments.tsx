@@ -3,15 +3,16 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
-import { DEPARTMENTS, type Department, type Subject } from "@/lib/subjects";
+import { DEPARTMENTS, type Department, type Gender, type Subject } from "@/lib/subjects";
 import type { Attempt } from "@/lib/exams";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, TrendingUp, Users as UsersIcon } from "lucide-react";
 
 interface UserDoc {
   uid: string;
   role: string;
   department?: Department;
   subjects?: Subject[];
+  gender?: Gender;
 }
 
 export const Route = createFileRoute("/_authenticated/admin/departments")({
