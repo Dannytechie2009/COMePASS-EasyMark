@@ -9,11 +9,15 @@ import {
   getDocs,
   documentId,
 } from "firebase/firestore";
-import { TrendingUp, TrendingDown, Lightbulb, Trophy } from "lucide-react";
+import { TrendingUp, TrendingDown, Lightbulb, Trophy, Star } from "lucide-react";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { attemptId, type Attempt, type ExamSession, type Question } from "@/lib/exams";
 import { fetchTopicsBySubject, type Topic } from "@/lib/syllabus";
+import { createReview, hasReviewed } from "@/lib/reviews";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/student/exam/$sessionId/result")({
   component: ResultPage,
