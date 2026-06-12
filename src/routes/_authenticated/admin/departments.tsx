@@ -84,6 +84,65 @@ function DepartmentsPage() {
 
   const maxAttempts = Math.max(1, ...subjectStats.map((s) => s.attempts));
 
+  // Gender split among submitted attempts.
+  const uidToGender = useMemo(() => {
+    const m = new Map<string, Gender>();
+    for (const u of users) if (u.gender) m.set(u.uid, u.gender);
+    return m;
+  }, [users]);
+
+  const genderStats = useMemo(() => {
+    const buckets: Record<string, { count: number; score: number; total: number }> = {
+      male: { count: 0, score: 0, total: 0 },
+      female: { count: 0, score: 0, total: 0 },
+      other: { count: 0, score: 0, total: 0 },
+      unknown: { count: 0, score: 0, total: 0 },
+    };
+    for (const a of attempts) {
+      if (!a.submitted) continue;
+      const g = (uidToGender.get(a.uid) ?? "unknown") as keyof typeof buckets;
+      const b = buckets[g] ?? buckets.unknown;
+      b.count += 1;
+      b.score += a.score ?? 0;
+      b.total += a.totalPossible ?? 0;
+    }
+    return Object.entries(buckets).map(([g, v]) => ({
+      gender: g,
+      count: v.count,
+      avg: v.total ? Math.round((v.score / v.total) * 100) : 0,
+    }));
+  }, [attempts, uidToGender]);
+
+  const totalGenderAttempts = genderStats.reduce((s, g) => s + g.count, 0);
+
+  // Weekly attempt trend (last 8 weeks).
+  const trend = useMemo(() => {
+    const now = Date.now();
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const buckets = Array.from({ length: 8 }, (_, i) => ({
+      label: i === 7 ? "This wk" : `${7 - i}w ago`,
+      start: now - (i + 1) * weekMs,
+      end: now - i * weekMs,
+      count: 0,
+      avg: 0,
+      score: 0,
+      total: 0,
+    })).reverse();
+    for (const a of attempts) {
+      if (!a.submitted) continue;
+      const ts = a.endedAt?.toMillis?.() ?? a.startedAt?.toMillis?.() ?? 0;
+      const b = buckets.find((x) => ts >= x.start && ts < x.end);
+      if (!b) continue;
+      b.count += 1;
+      b.score += a.score ?? 0;
+      b.total += a.totalPossible ?? 0;
+    }
+    buckets.forEach((b) => { b.avg = b.total ? Math.round((b.score / b.total) * 100) : 0; });
+    return buckets;
+  }, [attempts]);
+
+  const maxTrend = Math.max(1, ...trend.map((t) => t.count));
+
   return (
     <div className="space-y-8">
       <header className="rounded-2xl border bg-card p-6 shadow-sm">
