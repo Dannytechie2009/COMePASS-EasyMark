@@ -30,11 +30,49 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const { profile, user } = useAuth();
+  const nav = useNavigate();
   const [name, setName] = useState(profile?.name ?? "");
   const [gender, setGender] = useState<Gender | "">(profile?.gender ?? "");
   const [busy, setBusy] = useState(false);
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   if (!profile) return null;
+
+  async function deleteMyAccount() {
+    if (!user) return;
+    if (!confirm("This permanently deletes your account, profile, and all exam history. Continue?")) return;
+    setDeleting(true);
+    try {
+      // Re-authenticate (required by Firebase for sensitive ops on older sessions)
+      if (confirmPwd && user.email) {
+        const cred = EmailAuthProvider.credential(user.email, confirmPwd);
+        try { await reauthenticateWithCredential(user, cred); } catch (e: any) {
+          throw new Error(e?.message ?? "Wrong password");
+        }
+      }
+      // Wipe exam attempts
+      const snap = await getDocs(query(collection(getDb(), "attempts"), where("uid", "==", user.uid)));
+      const batch = writeBatch(getDb());
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      batch.delete(doc(getDb(), "users", user.uid));
+      await batch.commit();
+      // Delete auth user
+      await deleteUser(user);
+      toast.success("Account deleted");
+      nav({ to: "/" });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      if (msg.includes("requires-recent-login")) {
+        toast.error("Please enter your password above and try again.");
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setDeleting(false);
+    }
+  }
+
 
   async function save() {
     if (!name.trim()) return toast.error("Name is required");
