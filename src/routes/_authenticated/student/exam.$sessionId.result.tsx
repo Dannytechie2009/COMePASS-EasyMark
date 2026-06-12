@@ -142,6 +142,8 @@ function ResultPage() {
         <p className="text-muted-foreground mt-2">{pct}%</p>
       </div>
 
+      <ReviewSection sessionId={sessionId} sessionTitle={session.title} />
+
       {attempt.breakdown && Object.keys(attempt.breakdown).length > 1 && (
         <div className="rounded-2xl border border-border/70 bg-card p-5 shadow-sm">
           <h3 className="font-semibold mb-3">Subject breakdown</h3>
