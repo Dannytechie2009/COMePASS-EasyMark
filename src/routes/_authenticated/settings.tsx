@@ -1,13 +1,26 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
-import { updateProfile as updateAuthProfile } from "firebase/auth";
+import {
+  collection,
+  doc,
+  getDocs,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updateProfile as updateAuthProfile,
+} from "firebase/auth";
 import { useAuth } from "@/lib/auth-context";
 import { getDb, getFirebaseAuth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings as SettingsIcon } from "lucide-react";
+import { Settings as SettingsIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Gender } from "@/lib/subjects";
 
