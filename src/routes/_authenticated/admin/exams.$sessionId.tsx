@@ -5,7 +5,9 @@ import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Attempt, ExamSession } from "@/lib/exams";
 import { computeStatus, getSessionSubjects } from "@/lib/exams";
+import { listenReviewsForSession, type Review } from "@/lib/reviews";
 import { Button } from "@/components/ui/button";
+import { Star } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/exams/$sessionId")({
