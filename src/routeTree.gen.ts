@@ -26,9 +26,11 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminSyllabusRouteImport } from './routes/_authenticated/admin/syllabus'
 import { Route as AuthenticatedAdminQuestionsRouteImport } from './routes/_authenticated/admin/questions'
 import { Route as AuthenticatedAdminLegalRouteImport } from './routes/_authenticated/admin/legal'
+import { Route as AuthenticatedAdminInboxRouteImport } from './routes/_authenticated/admin/inbox'
 import { Route as AuthenticatedAdminExamsRouteImport } from './routes/_authenticated/admin/exams'
 import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_authenticated/admin/departments'
 import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin/announcements'
+import { Route as AuthenticatedAdminInboxRouteImport } from './routes/_authenticated/admin/inbox'
 import { Route as AuthenticatedStudentExamSessionIdRouteImport } from './routes/_authenticated/student/exam.$sessionId'
 import { Route as AuthenticatedAdminExamsSessionIdRouteImport } from './routes/_authenticated/admin/exams.$sessionId'
 import { Route as AuthenticatedStudentExamSessionIdResultRouteImport } from './routes/_authenticated/student/exam.$sessionId.result'
@@ -122,6 +124,11 @@ const AuthenticatedAdminLegalRoute = AuthenticatedAdminLegalRouteImport.update({
   path: '/admin/legal',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAdminInboxRoute = AuthenticatedAdminInboxRouteImport.update({
+  id: '/admin/inbox',
+  path: '/admin/inbox',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminExamsRoute = AuthenticatedAdminExamsRouteImport.update({
   id: '/admin/exams',
   path: '/admin/exams',
@@ -139,6 +146,11 @@ const AuthenticatedAdminAnnouncementsRoute =
     path: '/admin/announcements',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminInboxRoute = AuthenticatedAdminInboxRouteImport.update({
+  id: '/admin/inbox',
+  path: '/admin/inbox',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedStudentExamSessionIdRoute =
   AuthenticatedStudentExamSessionIdRouteImport.update({
     id: '/student/exam/$sessionId',
@@ -170,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/admin/inbox': typeof AuthenticatedAdminInboxRoute
   '/admin/legal': typeof AuthenticatedAdminLegalRoute
   '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/admin/syllabus': typeof AuthenticatedAdminSyllabusRoute
@@ -194,6 +207,7 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/admin/inbox': typeof AuthenticatedAdminInboxRoute
   '/admin/legal': typeof AuthenticatedAdminLegalRoute
   '/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/admin/syllabus': typeof AuthenticatedAdminSyllabusRoute
@@ -220,6 +234,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/announcements': typeof AuthenticatedAdminAnnouncementsRoute
   '/_authenticated/admin/departments': typeof AuthenticatedAdminDepartmentsRoute
   '/_authenticated/admin/exams': typeof AuthenticatedAdminExamsRouteWithChildren
+  '/_authenticated/admin/inbox': typeof AuthenticatedAdminInboxRoute
   '/_authenticated/admin/legal': typeof AuthenticatedAdminLegalRoute
   '/_authenticated/admin/questions': typeof AuthenticatedAdminQuestionsRoute
   '/_authenticated/admin/syllabus': typeof AuthenticatedAdminSyllabusRoute
@@ -246,6 +261,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/departments'
     | '/admin/exams'
+    | '/admin/inbox'
     | '/admin/legal'
     | '/admin/questions'
     | '/admin/syllabus'
@@ -270,6 +286,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/departments'
     | '/admin/exams'
+    | '/admin/inbox'
     | '/admin/legal'
     | '/admin/questions'
     | '/admin/syllabus'
@@ -295,6 +312,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/announcements'
     | '/_authenticated/admin/departments'
     | '/_authenticated/admin/exams'
+    | '/_authenticated/admin/inbox'
     | '/_authenticated/admin/legal'
     | '/_authenticated/admin/questions'
     | '/_authenticated/admin/syllabus'
@@ -440,6 +458,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLegalRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/inbox': {
+      id: '/_authenticated/admin/inbox'
+      path: '/admin/inbox'
+      fullPath: '/admin/inbox'
+      preLoaderRoute: typeof AuthenticatedAdminInboxRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/exams': {
       id: '/_authenticated/admin/exams'
       path: '/admin/exams'
@@ -520,6 +545,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminAnnouncementsRoute: typeof AuthenticatedAdminAnnouncementsRoute
   AuthenticatedAdminDepartmentsRoute: typeof AuthenticatedAdminDepartmentsRoute
   AuthenticatedAdminExamsRoute: typeof AuthenticatedAdminExamsRouteWithChildren
+  AuthenticatedAdminInboxRoute: typeof AuthenticatedAdminInboxRoute
   AuthenticatedAdminLegalRoute: typeof AuthenticatedAdminLegalRoute
   AuthenticatedAdminQuestionsRoute: typeof AuthenticatedAdminQuestionsRoute
   AuthenticatedAdminSyllabusRoute: typeof AuthenticatedAdminSyllabusRoute
@@ -536,6 +562,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminAnnouncementsRoute: AuthenticatedAdminAnnouncementsRoute,
   AuthenticatedAdminDepartmentsRoute: AuthenticatedAdminDepartmentsRoute,
   AuthenticatedAdminExamsRoute: AuthenticatedAdminExamsRouteWithChildren,
+  AuthenticatedAdminInboxRoute: AuthenticatedAdminInboxRoute,
   AuthenticatedAdminLegalRoute: AuthenticatedAdminLegalRoute,
   AuthenticatedAdminQuestionsRoute: AuthenticatedAdminQuestionsRoute,
   AuthenticatedAdminSyllabusRoute: AuthenticatedAdminSyllabusRoute,
