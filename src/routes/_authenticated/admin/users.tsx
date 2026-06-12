@@ -86,6 +86,34 @@ function UsersPage() {
     }
   }
 
+  async function clearHistory(uid: string, name: string) {
+    if (!confirm(`Delete ALL exam attempts for ${name}? This can't be undone.`)) return;
+    try {
+      const snap = await getDocs(query(collection(getDb(), "attempts"), where("uid", "==", uid)));
+      const batch = writeBatch(getDb());
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      toast.success(`Cleared ${snap.size} attempt${snap.size === 1 ? "" : "s"}`);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  }
+
+  async function deleteAccount(uid: string, name: string) {
+    if (!confirm(`HARD DELETE ${name}? Their profile and exam history will be removed. Their auth login must be removed manually in Firebase Console.`)) return;
+    try {
+      // delete attempts
+      const snap = await getDocs(query(collection(getDb(), "attempts"), where("uid", "==", uid)));
+      const batch = writeBatch(getDb());
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      batch.delete(doc(getDb(), "users", uid));
+      await batch.commit();
+      toast.success("Profile & history deleted. Remove auth user in Firebase Console.");
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="rounded-2xl border bg-card p-6 shadow-sm">
