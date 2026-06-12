@@ -30,6 +30,7 @@ function SessionDetail() {
   const [session, setSession] = useState<ExamSession | null>(null);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [keys, setKeys] = useState<KeyDoc[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     const unsub1 = onSnapshot(doc(getDb(), "examSessions", sessionId), (s) => {
@@ -44,7 +45,8 @@ function SessionDetail() {
       collection(getDb(), "examSessions", sessionId, "productKeys"),
       (snap) => setKeys(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))),
     );
-    return () => { unsub1(); unsub2(); unsub3(); };
+    const unsub4 = listenReviewsForSession(sessionId, setReviews);
+    return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   }, [sessionId]);
 
   if (!session) return <div className="text-muted-foreground">Loading…</div>;
