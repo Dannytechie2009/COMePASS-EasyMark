@@ -158,6 +158,7 @@ function UsersPage() {
                 <th className="text-left px-4 py-3 hidden md:table-cell">Department</th>
                 <th className="text-left px-4 py-3 hidden lg:table-cell">Subjects</th>
                 <th className="text-left px-4 py-3">Role</th>
+                <th className="text-left px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -189,11 +190,33 @@ function UsersPage() {
                       <option value="super_admin">Super admin</option>
                     </select>
                   </td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        title="Clear exam history"
+                        onClick={() => clearHistory(u.uid, u.name)}
+                      >
+                        <Eraser className="size-3.5" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        title="Delete account"
+                        disabled={u.uid === profile?.uid}
+                        onClick={() => deleteAccount(u.uid, u.name)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-muted-foreground">No users match your filters.</td>
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">No users match your filters.</td>
                 </tr>
               )}
             </tbody>
