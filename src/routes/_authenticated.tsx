@@ -57,7 +57,12 @@ function AuthenticatedLayout() {
         { to: "/admin/announcements", label: "Announcements" },
         { to: "/admin/users", label: "Users" },
         { to: "/admin/departments", label: "Analytics" },
-        ...(profile.role === "super_admin" ? [{ to: "/admin/legal", label: "Legal" }] : []),
+        ...(profile.role === "super_admin"
+          ? [
+              { to: "/admin/inbox", label: "Inbox" },
+              { to: "/admin/legal", label: "Legal" },
+            ]
+          : []),
         { to: "/settings", label: "Settings" },
       ]
     : [
