@@ -203,6 +203,57 @@ function DepartmentsPage() {
           ))}
         </div>
       </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <UsersIcon className="size-4 text-primary" />
+            <h2 className="font-semibold">Gender split (submitted attempts)</h2>
+          </div>
+          {totalGenderAttempts === 0 ? (
+            <p className="text-sm text-muted-foreground">No data yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {genderStats.filter((g) => g.count > 0).map((g) => {
+                const pct = Math.round((g.count / totalGenderAttempts) * 100);
+                return (
+                  <div key={g.gender} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="capitalize">{g.gender}</span>
+                      <span className="text-muted-foreground tabular-nums">{g.count} · {pct}% · avg {g.avg}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="size-4 text-primary" />
+            <h2 className="font-semibold">Last 8 weeks</h2>
+          </div>
+          <div className="flex items-end gap-2 h-32">
+            {trend.map((t, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1 text-[10px] text-muted-foreground">
+                <div className="w-full flex-1 flex items-end">
+                  <div
+                    className="w-full bg-primary/70 rounded-t"
+                    style={{ height: `${(t.count / maxTrend) * 100}%` }}
+                    title={`${t.count} attempts · avg ${t.avg}%`}
+                  />
+                </div>
+                <span>{t.label}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">Bars: weekly submitted attempts. Hover to see average score.</p>
+        </div>
+      </section>
     </div>
   );
 }
