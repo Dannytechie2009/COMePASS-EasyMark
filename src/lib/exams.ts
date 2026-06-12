@@ -37,7 +37,9 @@ export interface ExamSession {
   subjects?: Subject[];
   subjectQuestionMap?: SubjectQuestionMap;
   questionIds: string[];
-  durationMinutes: number;
+  durationMinutes: number; // per-student time limit
+  /** Window (minutes) the exam stays open from startAt. Falls back to durationMinutes. */
+  availabilityMinutes?: number;
   requiresProductKey?: boolean;
   keyMode?: KeyMode;
   productKey?: string;
