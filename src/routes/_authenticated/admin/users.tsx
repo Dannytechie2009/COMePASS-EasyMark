@@ -1,12 +1,22 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth, type Role } from "@/lib/auth-context";
 import type { Department, Subject } from "@/lib/subjects";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Shield, GraduationCap, UserCog } from "lucide-react";
+import { Search, Shield, GraduationCap, UserCog, Eraser, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserDoc {
