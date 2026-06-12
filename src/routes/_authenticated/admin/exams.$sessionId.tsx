@@ -160,6 +160,36 @@ function SessionDetail() {
           ))}
         </div>
       </div>
+
+      <div className="rounded-2xl border bg-card shadow-sm">
+        <div className="p-4 border-b flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold">Student reviews ({reviews.length})</h2>
+            <p className="text-xs text-muted-foreground">
+              Average rating: {reviews.length
+                ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+                : "—"} / 5
+            </p>
+          </div>
+          <Star className="size-5 text-amber-500" fill="currentColor" />
+        </div>
+        <div className="divide-y">
+          {reviews.length === 0 && <p className="p-4 text-sm text-muted-foreground">No reviews yet.</p>}
+          {reviews.map((r) => (
+            <div key={r.id} className="p-4 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-sm">{r.studentName}</span>
+                <span className="flex items-center gap-0.5 text-amber-500">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className="size-3.5" fill={i < r.rating ? "currentColor" : "none"} />
+                  ))}
+                </span>
+              </div>
+              {r.comment && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.comment}</p>}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
