@@ -160,6 +160,25 @@ function SettingsPage() {
           <Button onClick={save} disabled={busy}>{busy ? "Saving…" : "Save changes"}</Button>
         </div>
       </div>
+
+      <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5 shadow-sm space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="rounded-xl bg-destructive/10 text-destructive p-2"><Trash2 className="size-5" /></div>
+          <div>
+            <h2 className="font-semibold">Delete account</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Permanently removes your profile, exam attempts, and login. This action cannot be undone.
+            </p>
+          </div>
+        </div>
+        <div className="space-y-2 max-w-sm">
+          <Label className="text-xs">Confirm with your password</Label>
+          <Input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Your current password" />
+        </div>
+        <Button variant="destructive" disabled={deleting} onClick={deleteMyAccount}>
+          {deleting ? "Deleting…" : "Delete my account"}
+        </Button>
+      </div>
     </div>
   );
 }
