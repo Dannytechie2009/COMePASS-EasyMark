@@ -134,10 +134,7 @@ function TakeExam() {
   const deadlineMs = useMemo(() => {
     if (!attempt || !session) return null;
     const start = (attempt.startedAt as Timestamp | undefined)?.toMillis?.() ?? Date.now();
-    const personal = start + session.durationMinutes * 60_000;
-    const windowMinutes = session.availabilityMinutes ?? session.durationMinutes;
-    const windowEnd = session.startAt.toMillis() + windowMinutes * 60_000;
-    return Math.min(personal, windowEnd);
+    return start + session.durationMinutes * 60_000;
   }, [attempt, session]);
 
   // Auto-submit when timer hits 0
