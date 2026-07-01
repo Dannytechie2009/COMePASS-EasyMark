@@ -144,6 +144,72 @@ function SessionDetail() {
         </div>
       )}
 
+      {/* Live monitoring */}
+      <div className="rounded-2xl border bg-card shadow-sm">
+        <div className="p-4 border-b flex items-center gap-2">
+          <Radio className="size-4 text-green-600 animate-pulse" />
+          <h2 className="font-semibold">Live monitoring</h2>
+          <span className="text-xs text-muted-foreground ml-auto">Auto-refreshing</span>
+        </div>
+        <div className="divide-y">
+          {attempts.filter((a) => !a.submitted).length === 0 && (
+            <p className="p-4 text-sm text-muted-foreground">No students currently writing.</p>
+          )}
+          {attempts.filter((a) => !a.submitted).map((a) => {
+            const start = a.startedAt?.toMillis?.() ?? now;
+            const deadline = start + session.durationMinutes * 60_000;
+            const left = Math.max(0, deadline - now);
+            const answered = Object.keys(a.answers ?? {}).length;
+            const progress = Math.round((answered / session.questionIds.length) * 100);
+            const flags = violations.filter((v) => v.uid === a.uid).length;
+            return (
+              <div key={a.id} className="p-4 grid gap-2 sm:grid-cols-[1fr_auto] items-center">
+                <div>
+                  <div className="font-medium text-sm">{a.studentName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {answered}/{session.questionIds.length} answered · {progress}%
+                    {flags > 0 && (
+                      <span className="ml-2 inline-flex items-center gap-1 text-amber-600">
+                        <AlertTriangle className="size-3" /> {flags} flag{flags === 1 ? "" : "s"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className={`font-mono text-sm ${left < 60_000 ? "text-red-600" : ""}`}>{formatRemaining(left)}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">time left</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Recent alerts */}
+      {violations.length > 0 && (
+        <div className="rounded-2xl border bg-card shadow-sm">
+          <div className="p-4 border-b font-semibold flex items-center gap-2">
+            <AlertTriangle className="size-4 text-amber-600" /> Suspicious activity ({violations.length})
+          </div>
+          <div className="divide-y max-h-80 overflow-auto">
+            {violations.map((v) => (
+              <div key={v.id} className="p-3 text-sm flex items-center justify-between gap-3">
+                <div>
+                  <span className="font-medium">{v.studentName}</span>{" "}
+                  <span className="text-muted-foreground">— {v.kind.replace(/_/g, " ")}</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {v.at?.toDate?.().toLocaleTimeString?.() ?? ""}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-2xl border bg-card shadow-sm">
         <div className="p-4 border-b font-semibold">Scoreboard ({attempts.length})</div>
         <div className="divide-y">
@@ -164,6 +230,7 @@ function SessionDetail() {
           ))}
         </div>
       </div>
+
     </div>
   );
 }
