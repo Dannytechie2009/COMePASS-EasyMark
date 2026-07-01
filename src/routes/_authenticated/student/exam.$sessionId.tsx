@@ -318,18 +318,41 @@ function TakeExam() {
 
   const remaining = deadlineMs! - now;
   const answered = Object.keys(attempt.answers).length;
+  const totalViolations = Object.values(violationCounts).reduce((a, b) => a + b, 0);
+
+  // Enable proctoring for the live in-progress exam.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useExamProctor({
+    sessionId,
+    attemptId: attempt.id,
+    uid: profile!.uid,
+    studentName: profile!.name,
+    enabled: !attempt.submitted && remaining > 0,
+    onCounts: setViolationCounts,
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="sticky top-0 z-10 -mx-6 flex items-center justify-between border-b bg-background/95 px-6 py-3 backdrop-blur">
+    <div className="space-y-6 select-none" onCopy={(e) => e.preventDefault()}>
+      <div className="sticky top-0 z-10 -mx-6 flex flex-wrap items-center justify-between gap-2 border-b bg-background/95 px-6 py-3 backdrop-blur">
         <div>
           <div className="font-semibold">{session.title}</div>
-          <div className="text-xs text-muted-foreground">{answered}/{questions.length} answered</div>
+          <div className="text-xs text-muted-foreground">
+            {answered}/{questions.length} answered
+            {totalViolations > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-amber-600">
+                <AlertTriangle className="size-3" /> {totalViolations} alert{totalViolations === 1 ? "" : "s"} logged
+              </span>
+            )}
+          </div>
         </div>
-        <div className={`font-mono text-lg ${remaining < 60_000 ? "text-red-600" : ""}`}>
-          {formatRemaining(remaining)}
+        <div className="flex items-center gap-3">
+          <Button size="sm" variant="outline" onClick={requestFullscreen}>Fullscreen</Button>
+          <div className={`font-mono text-lg ${remaining < 60_000 ? "text-red-600" : ""}`}>
+            {formatRemaining(remaining)}
+          </div>
         </div>
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px] lg:items-start">
         <div className="space-y-6">
