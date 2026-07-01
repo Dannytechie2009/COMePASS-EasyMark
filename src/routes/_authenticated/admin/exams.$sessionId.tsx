@@ -1,10 +1,11 @@
 import { createFileRoute, Link, Navigate, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { doc, onSnapshot, updateDoc, collection, query, where } from "firebase/firestore";
+import { useEffect, useMemo, useState } from "react";
+import { doc, onSnapshot, updateDoc, collection, query, where, orderBy, limit } from "firebase/firestore";
+import { AlertTriangle, Radio } from "lucide-react";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import type { Attempt, ExamSession } from "@/lib/exams";
-import { computeStatus, getSessionSubjects } from "@/lib/exams";
+import { computeStatus, formatRemaining, getSessionSubjects } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
