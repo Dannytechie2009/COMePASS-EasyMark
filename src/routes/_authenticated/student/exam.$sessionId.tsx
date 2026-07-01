@@ -30,8 +30,10 @@ import {
 } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/Spinner";
+import { useExamProctor, requestFullscreen, type ViolationKind } from "@/lib/proctor";
 import { toast } from "sonner";
-import { CheckCircle2, Clock3, KeyRound, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, KeyRound, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/exam/$sessionId")({
   component: TakeExam,
@@ -189,7 +191,7 @@ function TakeExam() {
     }
   }
 
-  if (loading) return <div className="text-muted-foreground">Loading exam…</div>;
+  if (loading) return <Spinner label="Preparing your exam…" />;
   if (!session) return <div>Exam not found.</div>;
   if (!user?.emailVerified) return <div>Please verify your email before taking exams.</div>;
   if (loadError) {
@@ -312,7 +314,7 @@ function TakeExam() {
     return <div>This exam has ended.</div>;
   }
 
-  if (!attempt) return <div className="text-muted-foreground">Preparing…</div>;
+  if (!attempt) return <Spinner label="Preparing…" />;
 
   const remaining = deadlineMs! - now;
   const answered = Object.keys(attempt.answers).length;
