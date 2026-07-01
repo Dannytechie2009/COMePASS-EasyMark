@@ -30,8 +30,10 @@ import {
 } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/Spinner";
+import { useExamProctor, requestFullscreen, type ViolationKind } from "@/lib/proctor";
 import { toast } from "sonner";
-import { CheckCircle2, Clock3, KeyRound, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, KeyRound, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/exam/$sessionId")({
   component: TakeExam,
@@ -52,6 +54,7 @@ function TakeExam() {
   const [keyInput, setKeyInput] = useState("");
   const [keyError, setKeyError] = useState<string | null>(null);
   const [unlockedKey, setUnlockedKey] = useState<string | null>(null);
+  const [violationCounts, setViolationCounts] = useState<Record<ViolationKind, number>>({} as Record<ViolationKind, number>);
   const submittingRef = useRef(false);
 
   // Subscribe to session
@@ -189,7 +192,7 @@ function TakeExam() {
     }
   }
 
-  if (loading) return <div className="text-muted-foreground">Loading exam…</div>;
+  if (loading) return <Spinner label="Preparing your exam…" />;
   if (!session) return <div>Exam not found.</div>;
   if (!user?.emailVerified) return <div>Please verify your email before taking exams.</div>;
   if (loadError) {
@@ -312,22 +315,45 @@ function TakeExam() {
     return <div>This exam has ended.</div>;
   }
 
-  if (!attempt) return <div className="text-muted-foreground">Preparing…</div>;
+  if (!attempt) return <Spinner label="Preparing…" />;
 
   const remaining = deadlineMs! - now;
   const answered = Object.keys(attempt.answers).length;
+  const totalViolations = Object.values(violationCounts).reduce<number>((a, b) => a + (b ?? 0), 0);
+
+  // Enable proctoring for the live in-progress exam.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useExamProctor({
+    sessionId,
+    attemptId: attempt.id,
+    uid: profile!.uid,
+    studentName: profile!.name,
+    enabled: !attempt.submitted && remaining > 0,
+    onCounts: setViolationCounts,
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="sticky top-0 z-10 -mx-6 flex items-center justify-between border-b bg-background/95 px-6 py-3 backdrop-blur">
+    <div className="space-y-6 select-none" onCopy={(e) => e.preventDefault()}>
+      <div className="sticky top-0 z-10 -mx-6 flex flex-wrap items-center justify-between gap-2 border-b bg-background/95 px-6 py-3 backdrop-blur">
         <div>
           <div className="font-semibold">{session.title}</div>
-          <div className="text-xs text-muted-foreground">{answered}/{questions.length} answered</div>
+          <div className="text-xs text-muted-foreground">
+            {answered}/{questions.length} answered
+            {totalViolations > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-amber-600">
+                <AlertTriangle className="size-3" /> {totalViolations} alert{totalViolations === 1 ? "" : "s"} logged
+              </span>
+            )}
+          </div>
         </div>
-        <div className={`font-mono text-lg ${remaining < 60_000 ? "text-red-600" : ""}`}>
-          {formatRemaining(remaining)}
+        <div className="flex items-center gap-3">
+          <Button size="sm" variant="outline" onClick={requestFullscreen}>Fullscreen</Button>
+          <div className={`font-mono text-lg ${remaining < 60_000 ? "text-red-600" : ""}`}>
+            {formatRemaining(remaining)}
+          </div>
         </div>
       </div>
+
 
       <div className="grid gap-6 lg:grid-cols-[1fr_300px] lg:items-start">
         <div className="space-y-6">

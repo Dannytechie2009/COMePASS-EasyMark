@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/Spinner";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -56,7 +57,7 @@ function Landing() {
     );
   }
 
-  if (loading) return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center"><Spinner label="Loading…" /></div>;
   if (user && profile) return <Navigate to={profile.role === "student" ? "/student" : "/admin"} />;
 
   return (

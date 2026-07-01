@@ -46,7 +46,7 @@ export function ImageUploader({
         <div className="flex items-start gap-3 rounded-xl border bg-muted/40 p-3">
           <img src={value} alt="Uploaded preview" className="h-24 w-24 rounded-lg border object-cover" />
           <div className="flex flex-col gap-2">
-            <p className="text-xs text-muted-foreground break-all line-clamp-2 max-w-[260px]">{value}</p>
+            <p className="text-xs font-medium text-foreground">Image uploaded</p>
             <div className="flex gap-2">
               <Button type="button" size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={busy}>
                 Replace

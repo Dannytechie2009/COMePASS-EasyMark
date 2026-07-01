@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/Spinner";
 import { createFileRoute, Link, Outlet, Navigate, useNavigate } from "@tanstack/react-router";
 import { signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
@@ -37,7 +38,7 @@ function AuthenticatedLayout() {
   useEffect(() => listenLegal("privacy", setPrivacy), []);
   useEffect(() => listenLegal("terms", setTerms), []);
 
-  if (loading) return <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center"><Spinner label="Loading…" /></div>;
   if (!user) return <Navigate to="/login" />;
   if (!profile) return <div className="min-h-screen grid place-items-center text-muted-foreground">No profile found. Contact admin.</div>;
 
