@@ -319,7 +319,7 @@ function TakeExam() {
 
   const remaining = deadlineMs! - now;
   const answered = Object.keys(attempt.answers).length;
-  const totalViolations = Object.values(violationCounts).reduce((a, b) => a + b, 0);
+  const totalViolations = Object.values(violationCounts).reduce<number>((a, b) => a + (b ?? 0), 0);
 
   // Enable proctoring for the live in-progress exam.
   // eslint-disable-next-line react-hooks/rules-of-hooks
