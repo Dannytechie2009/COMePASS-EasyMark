@@ -54,6 +54,7 @@ function TakeExam() {
   const [keyInput, setKeyInput] = useState("");
   const [keyError, setKeyError] = useState<string | null>(null);
   const [unlockedKey, setUnlockedKey] = useState<string | null>(null);
+  const [violationCounts, setViolationCounts] = useState<Record<ViolationKind, number>>({} as Record<ViolationKind, number>);
   const submittingRef = useRef(false);
 
   // Subscribe to session
