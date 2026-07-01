@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/Spinner";
 import { createFileRoute, Link, Navigate, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { doc, onSnapshot, updateDoc, collection, query, where, orderBy, limit } from "firebase/firestore";
@@ -58,7 +59,7 @@ function SessionDetail() {
     return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   }, [sessionId]);
 
-  if (!session) return <div className="text-muted-foreground">Loading…</div>;
+  if (!session) return <Spinner label="Loading…" />;
 
   const status = computeStatus(session);
 

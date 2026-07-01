@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/Spinner";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -115,7 +116,7 @@ function ResultPage() {
     return arr;
   }, [attempt, questions, topicsBySubject]);
 
-  if (!session || !attempt) return <div className="text-muted-foreground">Loading…</div>;
+  if (!session || !attempt) return <Spinner label="Loading…" />;
   if (!attempt.submitted) return <div>You haven't submitted this exam yet.</div>;
 
   const pct = attempt.totalPossible ? Math.round(((attempt.score ?? 0) / attempt.totalPossible) * 100) : 0;

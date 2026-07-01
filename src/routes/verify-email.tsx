@@ -1,3 +1,4 @@
+import { Spinner } from "@/components/Spinner";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { sendEmailVerification, signOut } from "firebase/auth";
@@ -15,7 +16,7 @@ function VerifyPage() {
   const nav = useNavigate();
   const [busy, setBusy] = useState(false);
 
-  if (loading) return <div className="min-h-screen grid place-items-center">Loading…</div>;
+  if (loading) return <div className="min-h-screen grid place-items-center"><Spinner label="Loading…" /></div>;
   if (!user) return <div className="min-h-screen grid place-items-center"><Link to="/login" className="underline">Log in</Link></div>;
 
   async function resend() {
