@@ -42,11 +42,11 @@ function SyllabusPage() {
   async function save() {
     if (!draft.title.trim()) return toast.error("Topic title required");
     try {
-      const payload = {
+      const payload: any = {
         subject,
         title: draft.title.trim(),
-        description: draft.description.trim() || undefined,
-        studyTips: draft.studyTips.trim() || undefined,
+        description: draft.description.trim() || "",
+        studyTips: draft.studyTips.trim() || "",
         createdBy: profile!.uid,
       };
       if (editing) {
