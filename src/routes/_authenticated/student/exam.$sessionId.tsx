@@ -65,6 +65,9 @@ function TakeExam() {
     });
   }, [sessionId]);
 
+  // Derived live status (recomputed on every tick so the exam auto-opens when countdown hits 0)
+  const isLive = session ? computeStatus(session) === "live" : false;
+
   // Load or create attempt + questions
   useEffect(() => {
     if (!session || !profile || !user) return;
@@ -126,7 +129,10 @@ function TakeExam() {
         setLoading(false);
       }
     })();
-  }, [session, profile, user, sessionId, unlockedKey]);
+    // isLive is included so the effect re-runs the moment the countdown hits 0
+    // and the exam transitions from "scheduled" to "live".
+  }, [session, profile, user, sessionId, unlockedKey, isLive]);
+
 
   // Tick timer
   useEffect(() => {
