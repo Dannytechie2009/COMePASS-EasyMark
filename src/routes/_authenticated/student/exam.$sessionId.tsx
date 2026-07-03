@@ -198,7 +198,19 @@ function TakeExam() {
     }
   }
 
+  // Proctoring must be declared unconditionally to keep hook order stable across renders.
+  const proctorRemaining = deadlineMs != null ? deadlineMs - now : 0;
+  useExamProctor({
+    sessionId,
+    attemptId: attempt?.id ?? "",
+    uid: profile?.uid ?? "",
+    studentName: profile?.name ?? "",
+    enabled: Boolean(attempt && !attempt.submitted && proctorRemaining > 0),
+    onCounts: setViolationCounts,
+  });
+
   if (loading) return <Spinner label="Preparing your exam…" />;
+
   if (!session) return <div>Exam not found.</div>;
   if (!user?.emailVerified) return <div>Please verify your email before taking exams.</div>;
   if (loadError) {
