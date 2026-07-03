@@ -339,16 +339,6 @@ function TakeExam() {
   const answered = Object.keys(attempt.answers).length;
   const totalViolations = Object.values(violationCounts).reduce<number>((a, b) => a + (b ?? 0), 0);
 
-  // Enable proctoring for the live in-progress exam.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useExamProctor({
-    sessionId,
-    attemptId: attempt.id,
-    uid: profile!.uid,
-    studentName: profile!.name,
-    enabled: !attempt.submitted && remaining > 0,
-    onCounts: setViolationCounts,
-  });
 
   return (
     <div className="space-y-6 select-none" onCopy={(e) => e.preventDefault()}>
