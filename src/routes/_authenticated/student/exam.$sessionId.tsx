@@ -65,6 +65,9 @@ function TakeExam() {
     });
   }, [sessionId]);
 
+  // Derived live status (recomputed on every tick so the exam auto-opens when countdown hits 0)
+  const isLive = session ? computeStatus(session) === "live" : false;
+
   // Load or create attempt + questions
   useEffect(() => {
     if (!session || !profile || !user) return;
@@ -126,7 +129,10 @@ function TakeExam() {
         setLoading(false);
       }
     })();
-  }, [session, profile, user, sessionId, unlockedKey]);
+    // isLive is included so the effect re-runs the moment the countdown hits 0
+    // and the exam transitions from "scheduled" to "live".
+  }, [session, profile, user, sessionId, unlockedKey, isLive]);
+
 
   // Tick timer
   useEffect(() => {
@@ -192,7 +198,19 @@ function TakeExam() {
     }
   }
 
+  // Proctoring must be declared unconditionally to keep hook order stable across renders.
+  const proctorRemaining = deadlineMs != null ? deadlineMs - now : 0;
+  useExamProctor({
+    sessionId,
+    attemptId: attempt?.id ?? "",
+    uid: profile?.uid ?? "",
+    studentName: profile?.name ?? "",
+    enabled: Boolean(attempt && !attempt.submitted && proctorRemaining > 0),
+    onCounts: setViolationCounts,
+  });
+
   if (loading) return <Spinner label="Preparing your exam…" />;
+
   if (!session) return <div>Exam not found.</div>;
   if (!user?.emailVerified) return <div>Please verify your email before taking exams.</div>;
   if (loadError) {
@@ -321,16 +339,6 @@ function TakeExam() {
   const answered = Object.keys(attempt.answers).length;
   const totalViolations = Object.values(violationCounts).reduce<number>((a, b) => a + (b ?? 0), 0);
 
-  // Enable proctoring for the live in-progress exam.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useExamProctor({
-    sessionId,
-    attemptId: attempt.id,
-    uid: profile!.uid,
-    studentName: profile!.name,
-    enabled: !attempt.submitted && remaining > 0,
-    onCounts: setViolationCounts,
-  });
 
   return (
     <div className="space-y-6 select-none" onCopy={(e) => e.preventDefault()}>

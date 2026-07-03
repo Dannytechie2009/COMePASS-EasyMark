@@ -20,17 +20,31 @@ function ForgotPage() {
     e.preventDefault();
     setBusy(true);
     try {
-      await sendPasswordResetEmail(getFirebaseAuth(), email.trim(), {
-        url: `${window.location.origin}/login`,
-      });
-      toast.success("Reset email sent. Check your inbox.");
+      // Do NOT pass actionCodeSettings here — the continue URL must be whitelisted
+      // in Firebase Console → Authentication → Settings → Authorized domains,
+      // and any mismatch causes the send to fail silently. Firebase's default
+      // reset flow already returns users to your app after they set a new password.
+      await sendPasswordResetEmail(getFirebaseAuth(), email.trim());
+      toast.success("If that email is registered, a reset link is on its way. Check your inbox and spam folder.");
       nav({ to: "/login" });
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to send reset email");
+      const code = err?.code ?? "";
+      if (code === "auth/user-not-found") {
+        // Do not disclose account existence — show the same success message.
+        toast.success("If that email is registered, a reset link is on its way.");
+        nav({ to: "/login" });
+      } else if (code === "auth/invalid-email") {
+        toast.error("That email address looks invalid.");
+      } else if (code === "auth/too-many-requests") {
+        toast.error("Too many attempts. Please wait a few minutes and try again.");
+      } else {
+        toast.error(err?.message ?? "Failed to send reset email");
+      }
     } finally {
       setBusy(false);
     }
   }
+
 
   return (
     <div className="min-h-screen grid place-items-center p-6 bg-background">

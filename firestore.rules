@@ -7,39 +7,43 @@ service cloud.firestore {
     function myUid() { return request.auth.uid; }
     function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)); }
     function myRole() { return userDoc(myUid()).data.role; }
-    function isAdmin() { return isSignedIn() && (myRole() == 'admin' || myRole() == 'super_admin'); }
+    function isAdmin() {
+      return isSignedIn() && (myRole() == 'admin' || myRole() == 'tutor' || myRole() == 'super_admin');
+    }
     function isSuperAdmin() { return isSignedIn() && myRole() == 'super_admin'; }
 
     // -------- users --------
     match /users/{uid} {
       allow read: if isSignedIn() && (uid == myUid() || isAdmin());
-      // A user can create their own profile on registration.
       allow create: if isSignedIn() && uid == myUid();
-      // A user can update their own non-role fields; admins can update anyone.
       allow update: if isSignedIn() && (
         (uid == myUid() && !( 'role' in request.resource.data.diff(resource.data).affectedKeys() ))
         || isAdmin()
       );
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || (isSignedIn() && uid == myUid());
 
-      // Read receipts for announcements — user's own only.
       match /readAnnouncements/{aid} {
         allow read, write: if isSignedIn() && uid == myUid();
       }
     }
 
-    // -------- studentIds (used to enforce uniqueness at registration) --------
+    // -------- studentIds (uniqueness at registration) --------
     match /studentIds/{sid} {
       allow read: if isSignedIn();
-      // Create only if signed in; document id must match provided uid to prevent takeovers.
       allow create: if isSignedIn() && request.resource.data.uid == myUid();
       allow update, delete: if isAdmin();
     }
 
-    // -------- syllabus / topics --------
+    // -------- syllabus (legacy path) --------
     match /syllabus/{doc=**} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
+    }
+
+    // -------- topics (per-subject syllabus topics) --------
+    match /topics/{tid} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
 
     // -------- questions --------
@@ -53,12 +57,9 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create, update, delete: if isAdmin();
 
-      // Product keys pool for individual-key mode.
       match /productKeys/{kid} {
-        // Students need to read to claim; admins manage.
         allow read: if isSignedIn();
         allow create, delete: if isAdmin();
-        // Allow students to mark a key as used (transactionally) — only flipping used/usedBy/usedAt.
         allow update: if isSignedIn() && (
           isAdmin() ||
           (
@@ -69,7 +70,6 @@ service cloud.firestore {
         );
       }
 
-      // Proctor violations — students can append their own; admins can read all.
       match /violations/{vid} {
         allow read: if isAdmin();
         allow create: if isSignedIn() && request.resource.data.uid == myUid();
@@ -79,19 +79,18 @@ service cloud.firestore {
 
     // -------- attempts --------
     match /attempts/{aid} {
-      // Split read into get/list so missing docs don't trip permission errors.
       allow get: if isSignedIn() && (
         resource == null ||
         resource.data.uid == myUid() ||
         isAdmin()
       );
-      allow list: if isSignedIn(); // client-side filters restrict the payload
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.uid == myUid();
       allow update: if isSignedIn() && (
         (resource.data.uid == myUid() && resource.data.submitted == false)
         || isAdmin()
       );
-      allow delete: if isAdmin();
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.uid == myUid());
     }
 
     // -------- announcements --------
