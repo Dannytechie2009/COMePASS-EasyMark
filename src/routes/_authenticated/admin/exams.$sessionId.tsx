@@ -215,20 +215,40 @@ function SessionDetail() {
         <div className="p-4 border-b font-semibold">Scoreboard ({attempts.length})</div>
         <div className="divide-y">
           {sorted.length === 0 && <p className="p-4 text-sm text-muted-foreground">No attempts yet.</p>}
-          {sorted.map((a, i) => (
-            <div key={a.id} className="p-4 flex items-center justify-between text-sm gap-3">
-              <div className="min-w-0">
-                <div className="font-medium truncate">#{i + 1} {a.studentName}</div>
-                <div className="text-muted-foreground text-xs truncate">
-                  {a.studentIdShort ?? a.uid.slice(0, 6)} · {a.submitted ? (a.autoSubmitted ? "auto-submitted" : "submitted") : "in progress"}
-                  {a.productKeyUsed && ` · PIN ${a.productKeyUsed}`}
+          {sorted.map((a, i) => {
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+            const pct = a.submitted && a.totalPossible ? Math.round(((a.score ?? 0) / a.totalPossible) * 100) : null;
+            return (
+              <Link
+                key={a.id}
+                to="/admin/exams/$sessionId/attempts/$uid"
+                params={{ sessionId, uid: a.uid }}
+                className="p-4 flex items-center justify-between text-sm gap-3 hover:bg-accent transition-colors"
+              >
+                <div className="min-w-0 flex items-center gap-3">
+                  <div className={`shrink-0 size-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                    i === 0 ? "bg-yellow-400/20 text-yellow-700 dark:text-yellow-300" :
+                    i === 1 ? "bg-slate-400/20 text-slate-700 dark:text-slate-300" :
+                    i === 2 ? "bg-amber-600/20 text-amber-700 dark:text-amber-300" :
+                    "bg-muted text-muted-foreground"
+                  }`}>
+                    {medal ?? `#${i + 1}`}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{a.studentName}</div>
+                    <div className="text-muted-foreground text-xs truncate">
+                      {a.studentIdShort ?? a.uid.slice(0, 6)} · {a.submitted ? (a.autoSubmitted ? "auto-submitted" : "submitted") : "in progress"}
+                      {a.productKeyUsed && ` · PIN ${a.productKeyUsed}`}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="font-mono shrink-0">
-                {a.submitted ? `${a.score}/${a.totalPossible}` : "—"}
-              </div>
-            </div>
-          ))}
+                <div className="text-right shrink-0">
+                  <div className="font-mono">{a.submitted ? `${a.score}/${a.totalPossible}` : "—"}</div>
+                  {pct !== null && <div className="text-xs text-muted-foreground">{pct}%</div>}
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </div>
 
