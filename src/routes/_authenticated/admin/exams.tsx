@@ -124,7 +124,18 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [individualCount, setIndividualCount] = useState(20);
   const [audienceAll, setAudienceAll] = useState(true);
   const [audienceDepts, setAudienceDepts] = useState<Department[]>([]);
+  const [pickMode, setPickMode] = useState<"manual" | "random">("random");
+  const [randomCounts, setRandomCounts] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+
+  function sampleRandom<T>(arr: T[], n: number): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a.slice(0, Math.min(n, a.length));
+  }
 
   // Subject list shown depends on exam type. POST-UTME adds GK & Current Affairs.
   const subjectPool = useMemo<readonly Subject[]>(
