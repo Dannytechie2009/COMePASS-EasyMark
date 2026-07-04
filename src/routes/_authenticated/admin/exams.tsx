@@ -455,9 +455,48 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         )}
       </div>
 
+      <div className="rounded-xl border p-4 space-y-3">
+        <Label className="text-sm font-medium">How should questions be picked?</Label>
+        <div className="inline-flex rounded-lg border p-1 text-xs">
+          <button type="button" onClick={() => setPickMode("random")}
+            className={`px-3 py-1.5 rounded-md ${pickMode === "random" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Random from bank</button>
+          <button type="button" onClick={() => setPickMode("manual")}
+            className={`px-3 py-1.5 rounded-md ${pickMode === "manual" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Hand-pick</button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {pickMode === "random"
+            ? "A fresh random subset is drawn from each subject bank at creation. Combine with 'Shuffle questions' to reorder per candidate."
+            : "Choose the exact questions to include from each subject."}
+        </p>
+      </div>
+
       {activeSubjects.map((subj) => {
         const pool = bank[subj] ?? [];
         const sel = selectedBySubject[subj] ?? new Set();
+        if (pickMode === "random") {
+          return (
+            <div key={subj} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{subj} — random draw</Label>
+                <span className="text-xs text-muted-foreground">{pool.length} in bank</span>
+              </div>
+              <div className="grid sm:grid-cols-[auto_1fr] gap-2 items-center">
+                <Input
+                  type="number"
+                  min={1}
+                  max={pool.length || 1}
+                  value={randomCounts[subj] ?? ""}
+                  onChange={(e) => setRandomCounts((p) => ({ ...p, [subj]: Number(e.target.value) }))}
+                  placeholder="How many?"
+                  className="sm:w-32"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Draw this many random questions from the {subj} bank.
+                </p>
+              </div>
+            </div>
+          );
+        }
         return (
           <div key={subj} className="space-y-2">
             <div className="flex items-center justify-between">
