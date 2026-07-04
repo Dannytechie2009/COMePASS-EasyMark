@@ -124,7 +124,18 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
   const [individualCount, setIndividualCount] = useState(20);
   const [audienceAll, setAudienceAll] = useState(true);
   const [audienceDepts, setAudienceDepts] = useState<Department[]>([]);
+  const [pickMode, setPickMode] = useState<"manual" | "random">("random");
+  const [randomCounts, setRandomCounts] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+
+  function sampleRandom<T>(arr: T[], n: number): T[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a.slice(0, Math.min(n, a.length));
+  }
 
   // Subject list shown depends on exam type. POST-UTME adds GK & Current Affairs.
   const subjectPool = useMemo<readonly Subject[]>(
@@ -204,8 +215,17 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
     const subjectQuestionMap: SubjectQuestionMap = {};
     let questionIds: string[] = [];
     for (const subj of activeSubjects) {
-      const ids = Array.from(selectedBySubject[subj] ?? []);
-      if (ids.length === 0) return toast.error(`Pick at least one question for ${subj}`);
+      let ids: string[];
+      if (pickMode === "random") {
+        const pool = (bank[subj] ?? []).map((q) => q.id);
+        const n = Number(randomCounts[subj] ?? 0);
+        if (!n || n < 1) return toast.error(`Set how many random questions to draw for ${subj}`);
+        if (pool.length < n) return toast.error(`${subj} only has ${pool.length} questions in the bank (need ${n})`);
+        ids = sampleRandom(pool, n);
+      } else {
+        ids = Array.from(selectedBySubject[subj] ?? []);
+        if (ids.length === 0) return toast.error(`Pick at least one question for ${subj}`);
+      }
       subjectQuestionMap[subj] = ids;
       questionIds = questionIds.concat(ids);
     }
@@ -435,9 +455,48 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
         )}
       </div>
 
+      <div className="rounded-xl border p-4 space-y-3">
+        <Label className="text-sm font-medium">How should questions be picked?</Label>
+        <div className="inline-flex rounded-lg border p-1 text-xs">
+          <button type="button" onClick={() => setPickMode("random")}
+            className={`px-3 py-1.5 rounded-md ${pickMode === "random" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Random from bank</button>
+          <button type="button" onClick={() => setPickMode("manual")}
+            className={`px-3 py-1.5 rounded-md ${pickMode === "manual" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Hand-pick</button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {pickMode === "random"
+            ? "A fresh random subset is drawn from each subject bank at creation. Combine with 'Shuffle questions' to reorder per candidate."
+            : "Choose the exact questions to include from each subject."}
+        </p>
+      </div>
+
       {activeSubjects.map((subj) => {
         const pool = bank[subj] ?? [];
         const sel = selectedBySubject[subj] ?? new Set();
+        if (pickMode === "random") {
+          return (
+            <div key={subj} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{subj} — random draw</Label>
+                <span className="text-xs text-muted-foreground">{pool.length} in bank</span>
+              </div>
+              <div className="grid sm:grid-cols-[auto_1fr] gap-2 items-center">
+                <Input
+                  type="number"
+                  min={1}
+                  max={pool.length || 1}
+                  value={randomCounts[subj] ?? ""}
+                  onChange={(e) => setRandomCounts((p) => ({ ...p, [subj]: Number(e.target.value) }))}
+                  placeholder="How many?"
+                  className="sm:w-32"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Draw this many random questions from the {subj} bank.
+                </p>
+              </div>
+            </div>
+          );
+        }
         return (
           <div key={subj} className="space-y-2">
             <div className="flex items-center justify-between">
