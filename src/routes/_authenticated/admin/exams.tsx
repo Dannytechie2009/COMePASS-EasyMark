@@ -215,8 +215,17 @@ function CreateExam({ onClose, createdBy }: { onClose: () => void; createdBy: st
     const subjectQuestionMap: SubjectQuestionMap = {};
     let questionIds: string[] = [];
     for (const subj of activeSubjects) {
-      const ids = Array.from(selectedBySubject[subj] ?? []);
-      if (ids.length === 0) return toast.error(`Pick at least one question for ${subj}`);
+      let ids: string[];
+      if (pickMode === "random") {
+        const pool = (bank[subj] ?? []).map((q) => q.id);
+        const n = Number(randomCounts[subj] ?? 0);
+        if (!n || n < 1) return toast.error(`Set how many random questions to draw for ${subj}`);
+        if (pool.length < n) return toast.error(`${subj} only has ${pool.length} questions in the bank (need ${n})`);
+        ids = sampleRandom(pool, n);
+      } else {
+        ids = Array.from(selectedBySubject[subj] ?? []);
+        if (ids.length === 0) return toast.error(`Pick at least one question for ${subj}`);
+      }
       subjectQuestionMap[subj] = ids;
       questionIds = questionIds.concat(ids);
     }
