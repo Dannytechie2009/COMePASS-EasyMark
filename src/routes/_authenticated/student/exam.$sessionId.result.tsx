@@ -116,8 +116,21 @@ function ResultPage() {
     return arr;
   }, [attempt, questions, topicsBySubject]);
 
-  if (!session || !attempt) return <Spinner label="Loading…" />;
-  if (!attempt.submitted) return <div>You haven't submitted this exam yet.</div>;
+  if (!session) return <Spinner label="Loading…" />;
+  if (!attempt) return (
+    <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+      <Link to="/student" className="text-sm text-muted-foreground hover:underline">← Back</Link>
+      <h1 className="text-2xl font-semibold">{session.title}</h1>
+      <p className="text-sm text-muted-foreground">No attempt on record for this exam.</p>
+    </div>
+  );
+  if (!attempt.submitted) return (
+    <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+      <Link to="/student" className="text-sm text-muted-foreground hover:underline">← Back</Link>
+      <h1 className="text-2xl font-semibold">{session.title}</h1>
+      <p className="text-sm text-muted-foreground">You haven't submitted this exam yet.</p>
+    </div>
+  );
 
   const pct = attempt.totalPossible ? Math.round(((attempt.score ?? 0) / attempt.totalPossible) * 100) : 0;
   const correctionsOpen = session.status === "corrections_open";
