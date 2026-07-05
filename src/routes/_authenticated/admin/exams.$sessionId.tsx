@@ -86,6 +86,9 @@ function SessionDetail() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <Button asChild variant="outline">
+          <Link to="/admin/exams/$sessionId/questions" params={{ sessionId }}>View assigned questions</Link>
+        </Button>
         {status === "ended" && session.status !== "corrections_open" && (
           <Button onClick={() => setStatus("corrections_open")}>Release corrections</Button>
         )}

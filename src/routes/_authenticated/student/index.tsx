@@ -104,68 +104,181 @@ function StudentHome() {
         </div>
       </section>
 
-      <section className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold">Exams for your subjects</h2>
-          <p className="text-sm text-muted-foreground">Single-subject mocks and full JAMB combinations assigned to you.</p>
-        </div>
-
-        {queryError && (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-            Exams could not load just now. I’ve removed the index-dependent query, so this should clear after the preview refreshes.
-          </div>
-        )}
-
-        {visibleSessions.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-card px-6 py-10 text-center shadow-sm">
-            <p className="text-base font-medium">No exams scheduled yet.</p>
-            <p className="mt-2 text-sm text-muted-foreground">Once your tutor publishes a session for your subjects, it will show up here automatically.</p>
-          </div>
-        )}
-
-        <div className="grid gap-4">
-          {visibleSessions.map((s) => {
-          const status = computeStatus(s);
-          const target = status === "corrections_open" ? "/student/exam/$sessionId/result" : "/student/exam/$sessionId";
-          const subjects = getSessionSubjects(s);
-          return (
-            <Link
-              key={s.id}
-              to={target}
-              params={{ sessionId: s.id }}
-              className="group rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusPill status={status} />
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                      {s.mode === "combo" ? "Combo exam" : "Single subject"}
-                    </span>
-                    {s.requiresProductKey && (
-                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Product key required</span>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="text-lg font-semibold text-foreground transition-colors group-hover:text-primary">{s.title}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {subjects.join(" • ")} · {formatDurationFromMs(s.durationMinutes * 60_000)} · {s.startAt.toDate().toLocaleString()}
-                    </div>
-                  </div>
-                </div>
-
-                <Button variant={status === "live" ? "default" : "outline"} className="sm:self-center">
-                  {status === "corrections_open" ? "View result" : status === "live" ? "Enter exam" : "Open details"}
-                </Button>
-              </div>
-            </Link>
-          );
-        })}
-        </div>
-      </section>
+      <ExamsList sessions={visibleSessions} queryError={queryError} />
     </div>
   );
+}
+
+const HIDDEN_KEY = "comepass:hiddenSessions";
+
+function loadHidden(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? "[]")); }
+  catch { return new Set(); }
+}
+function saveHidden(s: Set<string>) {
+  try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(s))); } catch { /* ignore */ }
+}
+
+function ExamsList({ sessions, queryError }: { sessions: ExamSession[]; queryError: string | null }) {
+  const [hidden, setHidden] = useState<Set<string>>(() => loadHidden());
+  const [filter, setFilter] = useState<"all" | "live" | "upcoming" | "recent" | "corrections">("all");
+
+  const now = Date.now();
+  const DAY = 86_400_000;
+
+  const enriched = useMemo(() => sessions.map((s) => {
+    const status = computeStatus(s);
+    const startMs = s.startAt.toMillis();
+    const endMs = startMs + s.durationMinutes * 60_000;
+    let bucket: "live" | "upcoming" | "recent" | "older" | "corrections";
+    if (status === "corrections_open") bucket = "corrections";
+    else if (status === "live") bucket = "live";
+    else if (status === "scheduled") bucket = "upcoming";
+    else bucket = now - endMs <= 7 * DAY ? "recent" : "older";
+    return { s, status, startMs, endMs, bucket };
+  }), [sessions, now]);
+
+  const filtered = enriched.filter(({ s, bucket }) => {
+    if (hidden.has(s.id)) return false;
+    if (filter === "all") return true;
+    return bucket === filter;
+  });
+
+  const counts = {
+    live: enriched.filter((x) => x.bucket === "live" && !hidden.has(x.s.id)).length,
+    upcoming: enriched.filter((x) => x.bucket === "upcoming" && !hidden.has(x.s.id)).length,
+    corrections: enriched.filter((x) => x.bucket === "corrections" && !hidden.has(x.s.id)).length,
+    recent: enriched.filter((x) => x.bucket === "recent" && !hidden.has(x.s.id)).length,
+  };
+
+  function hideOne(id: string) {
+    const next = new Set(hidden); next.add(id); setHidden(next); saveHidden(next);
+  }
+  function clearHistory() {
+    const toHide = enriched.filter((x) => x.status === "ended").map((x) => x.s.id);
+    const next = new Set(hidden); toHide.forEach((id) => next.add(id)); setHidden(next); saveHidden(next);
+  }
+  function resetHidden() {
+    setHidden(new Set()); saveHidden(new Set());
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">Exams for your subjects</h2>
+          <p className="text-sm text-muted-foreground">Filter by status or clear old sessions from your view.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={clearHistory} disabled={counts.recent === 0 && enriched.every((x) => x.status !== "ended")}>Clear history</Button>
+          {hidden.size > 0 && <Button size="sm" variant="ghost" onClick={resetHidden}>Restore hidden ({hidden.size})</Button>}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {[
+          { id: "all" as const, label: "All", n: filtered.length + (filter === "all" ? 0 : 0) },
+          { id: "live" as const, label: "Live now", n: counts.live },
+          { id: "upcoming" as const, label: "Upcoming", n: counts.upcoming },
+          { id: "corrections" as const, label: "Corrections open", n: counts.corrections },
+          { id: "recent" as const, label: "Finished recently", n: counts.recent },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setFilter(tab.id)}
+            className={`px-3 py-1.5 rounded-full text-xs border transition-colors ${filter === tab.id ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"}`}
+          >{tab.label}{tab.id !== "all" && ` (${tab.n})`}</button>
+        ))}
+      </div>
+
+      {queryError && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          Exams could not load just now. Please refresh in a moment.
+        </div>
+      )}
+
+      {filtered.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border/80 bg-card px-6 py-10 text-center shadow-sm">
+          <p className="text-base font-medium">Nothing to show here.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {hidden.size > 0 ? "You have hidden sessions — restore them above." : "Once your tutor publishes a session for your subjects, it will show up here."}
+          </p>
+        </div>
+      )}
+
+      <div className="grid gap-4">
+        {filtered.map(({ s, status, startMs, endMs, bucket }) => {
+          const target = status === "corrections_open" ? "/student/exam/$sessionId/result" : "/student/exam/$sessionId";
+          const subjects = getSessionSubjects(s);
+          const label = describeWhen({ status, startMs, endMs, now });
+          return (
+            <div key={s.id} className="group relative rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+              <Link
+                to={target}
+                params={{ sessionId: s.id }}
+                className="block"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusPill status={status} />
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                        {s.mode === "combo" ? "Combo exam" : "Single subject"}
+                      </span>
+                      {s.requiresProductKey && (
+                        <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Product key required</span>
+                      )}
+                      <span className="text-xs text-muted-foreground">{label}</span>
+                    </div>
+
+                    <div>
+                      <div className="text-lg font-semibold text-foreground transition-colors group-hover:text-primary">{s.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {subjects.join(" • ")} · {formatDurationFromMs(s.durationMinutes * 60_000)} · {s.startAt.toDate().toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button variant={status === "live" ? "default" : "outline"} className="sm:self-center">
+                    {status === "corrections_open" ? "View corrections" : status === "live" ? "Enter exam" : status === "scheduled" ? "Open details" : "View summary"}
+                  </Button>
+                </div>
+              </Link>
+              {(bucket === "recent" || bucket === "older") && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); hideOne(s.id); }}
+                  className="absolute top-3 right-3 text-[11px] text-muted-foreground hover:text-foreground underline underline-offset-2"
+                >Hide</button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function describeWhen({ status, startMs, endMs, now }: { status: string; startMs: number; endMs: number; now: number }) {
+  const MIN = 60_000, HR = 3_600_000, DAY = 86_400_000;
+  if (status === "scheduled") {
+    const diff = startMs - now;
+    if (diff < HR) return `Starts in ${Math.max(1, Math.round(diff / MIN))} min`;
+    if (diff < DAY) return `Starts in ${Math.round(diff / HR)} h`;
+    return `Starts in ${Math.round(diff / DAY)} days`;
+  }
+  if (status === "live") {
+    const left = endMs - now;
+    return left > 0 ? `Ends in ${Math.max(1, Math.round(left / MIN))} min` : "Ending now";
+  }
+  const ago = now - endMs;
+  if (status === "corrections_open") return "Corrections released";
+  if (ago < HR) return "Just finished";
+  if (ago < DAY) return `Ended ${Math.max(1, Math.round(ago / HR))}h ago`;
+  if (ago < 7 * DAY) return `Ended ${Math.round(ago / DAY)}d ago`;
+  if (ago < 30 * DAY) return `Ended ${Math.round(ago / (7 * DAY))}w ago`;
+  return `Ended on ${new Date(endMs).toLocaleDateString()}`;
 }
 
 function MetricCard({
@@ -189,11 +302,12 @@ function MetricCard({
 }
 
 function StatusPill({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    scheduled: "bg-primary/10 text-primary",
-    live: "bg-secondary/15 text-secondary",
-    ended: "bg-muted text-muted-foreground",
-    corrections_open: "bg-accent/10 text-accent",
+  const map: Record<string, { cls: string; label: string }> = {
+    scheduled: { cls: "bg-primary/10 text-primary", label: "Upcoming" },
+    live: { cls: "bg-green-500/15 text-green-700 dark:text-green-400", label: "Live now" },
+    ended: { cls: "bg-muted text-muted-foreground", label: "Ended" },
+    corrections_open: { cls: "bg-accent/15 text-accent-foreground", label: "Corrections open" },
   };
-  return <span className={`h-fit rounded-full px-2.5 py-1 text-xs font-medium capitalize ${colors[status]}`}>{status.replace("_", " ")}</span>;
+  const info = map[status] ?? { cls: "bg-muted text-muted-foreground", label: status };
+  return <span className={`h-fit rounded-full px-2.5 py-1 text-xs font-medium ${info.cls}`}>{info.label}</span>;
 }
