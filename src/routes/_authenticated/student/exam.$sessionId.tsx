@@ -330,10 +330,26 @@ function TakeExam() {
   }
 
   if (status === "ended" && !attempt) {
-    return <div>This exam has ended.</div>;
+    return (
+      <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+        <Link to="/student" className="text-sm text-muted-foreground hover:underline">← Back to dashboard</Link>
+        <h1 className="text-2xl font-semibold">{session.title}</h1>
+        <p className="text-sm text-muted-foreground">This exam has ended and you didn't submit an attempt. Corrections will open here once your tutor releases them.</p>
+      </div>
+    );
   }
 
-  if (!attempt) return <Spinner label="Preparing…" />;
+  if (status === "corrections_open" && !attempt) {
+    return (
+      <div className="space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+        <Link to="/student" className="text-sm text-muted-foreground hover:underline">← Back to dashboard</Link>
+        <h1 className="text-2xl font-semibold">{session.title} — Corrections</h1>
+        <p className="text-sm text-muted-foreground">You didn't take this exam, so there's no personal result to show.</p>
+      </div>
+    );
+  }
+
+  if (!attempt) return <Spinner label="Preparing your exam…" />;
 
   const remaining = deadlineMs! - now;
   const answered = Object.keys(attempt.answers).length;
