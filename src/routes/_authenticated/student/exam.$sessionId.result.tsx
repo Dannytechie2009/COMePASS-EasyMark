@@ -261,58 +261,22 @@ function ResultPage() {
         </div>
       )}
 
-      {!correctionsOpen && (
-        <p className="text-sm text-muted-foreground text-center">
-          Corrections will appear here once your tutor releases them.
-        </p>
-      )}
-
-      {correctionsOpen && (
-        <div className="space-y-4">
-          <h2 className="font-semibold">Corrections</h2>
-          {attempt.questionOrder.map((qid, idx) => {
-            const q = questions[qid];
-            if (!q) return null;
-            const chosen = attempt.answers[qid];
-            const correct = q.correctIndex;
-            const got = chosen === correct;
-            return (
-              <div key={qid} className="rounded-lg border p-4 space-y-2">
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Question {idx + 1} {got ? "✓" : "✗"}</span>
-                  {q.topicTitle && (
-                    <span className="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{q.topicTitle}</span>
-                  )}
-                </div>
-                <div className="font-medium whitespace-pre-wrap">{q.text}</div>
-                {q.imageUrl && <img src={q.imageUrl} alt="" className="max-h-48 rounded border" />}
-                <ul className="text-sm space-y-1">
-                  {q.options.map((o, i) => {
-                    const isChosen = chosen === i;
-                    const isCorrect = correct === i;
-                    return (
-                      <li
-                        key={i}
-                        className={
-                          isCorrect
-                            ? "text-green-600 dark:text-green-400 font-medium"
-                            : isChosen
-                              ? "text-red-600 dark:text-red-400"
-                              : ""
-                        }
-                      >
-                        {"ABCD"[i]}. {o} {isCorrect && "✓"} {isChosen && !isCorrect && "(your answer)"}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {q.explanation && (
-                  <p className="text-sm text-muted-foreground border-l-2 pl-3 mt-2">{q.explanation}</p>
-                )}
-              </div>
-            );
-          })}
+      {correctionsOpen ? (
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 shadow-sm text-center">
+          <p className="font-semibold">Corrections have been released</p>
+          <p className="text-sm text-muted-foreground mt-1">See every question with the correct answer and explanation.</p>
+          <Link
+            to="/student/exam/$sessionId/corrections"
+            params={{ sessionId }}
+            className="inline-flex items-center justify-center mt-4 h-10 px-5 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            View corrections
+          </Link>
         </div>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center">
+          Corrections will unlock here once your tutor releases them.
+        </p>
       )}
     </div>
   );
