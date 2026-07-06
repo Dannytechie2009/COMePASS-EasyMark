@@ -89,12 +89,15 @@ function SessionDetail() {
         <Button asChild variant="outline">
           <Link to="/admin/exams/$sessionId/questions" params={{ sessionId }}>View assigned questions</Link>
         </Button>
+        <Button asChild>
+          <Link to="/admin/exams/$sessionId/corrections" params={{ sessionId }}>Open corrections page</Link>
+        </Button>
         {session.status !== "corrections_open" ? (
-          <Button onClick={() => setStatus("corrections_open")}>
-            Release corrections to students
+          <Button variant="outline" onClick={() => setStatus("corrections_open")}>
+            Release corrections
           </Button>
         ) : (
-          <Button variant="outline" onClick={() => setStatus("ended")}>Hide corrections from students</Button>
+          <Button variant="outline" onClick={() => setStatus("ended")}>Hide corrections</Button>
         )}
       </div>
 
