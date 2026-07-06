@@ -89,13 +89,20 @@ function SessionDetail() {
         <Button asChild variant="outline">
           <Link to="/admin/exams/$sessionId/questions" params={{ sessionId }}>View assigned questions</Link>
         </Button>
-        {status === "ended" && session.status !== "corrections_open" && (
-          <Button onClick={() => setStatus("corrections_open")}>Release corrections</Button>
-        )}
-        {session.status === "corrections_open" && (
-          <Button variant="outline" onClick={() => setStatus("ended")}>Hide corrections</Button>
+        {session.status !== "corrections_open" ? (
+          <Button onClick={() => setStatus("corrections_open")}>
+            Release corrections to students
+          </Button>
+        ) : (
+          <Button variant="outline" onClick={() => setStatus("ended")}>Hide corrections from students</Button>
         )}
       </div>
+
+      {session.status === "corrections_open" && (
+        <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-3 text-sm text-green-800 dark:text-green-300">
+          ✓ Corrections are live — students can now view every question, correct answer and explanation on their result page.
+        </div>
+      )}
 
       {session.requiresProductKey && (
         <div className="rounded-2xl border bg-card shadow-sm">
