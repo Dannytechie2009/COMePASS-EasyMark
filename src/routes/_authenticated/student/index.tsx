@@ -225,9 +225,27 @@ function ExamsList({ sessions, attemptsBySession, queryError }: { sessions: Exam
 
       <div className="grid gap-4">
         {filtered.map(({ s, status, startMs, endMs, bucket }) => {
-          const target = status === "corrections_open" ? "/student/exam/$sessionId/result" : "/student/exam/$sessionId";
+          const attempt = attemptsBySession.get(s.id);
+          const hasSubmitted = !!attempt?.submitted;
+          const inProgress = !!attempt && !attempt.submitted;
+          const target = hasSubmitted
+            ? "/student/exam/$sessionId/result"
+            : status === "corrections_open"
+              ? "/student/exam/$sessionId/result"
+              : "/student/exam/$sessionId";
           const subjects = getSessionSubjects(s);
           const label = describeWhen({ status, startMs, endMs, now });
+          const cta = hasSubmitted
+            ? (status === "corrections_open" ? "View corrections" : "View your result")
+            : inProgress
+              ? "Resume exam"
+              : status === "corrections_open"
+                ? "View corrections"
+                : status === "live"
+                  ? "Enter exam"
+                  : status === "scheduled"
+                    ? "Open details"
+                    : "View summary";
           return (
             <div key={s.id} className="group relative rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
               <Link
@@ -239,10 +257,18 @@ function ExamsList({ sessions, attemptsBySession, queryError }: { sessions: Exam
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusPill status={status} />
+                      {hasSubmitted && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+                          <CheckCircle2 className="size-3" /> You submitted
+                        </span>
+                      )}
+                      {inProgress && (
+                        <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">In progress</span>
+                      )}
                       <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
                         {s.mode === "combo" ? "Combo exam" : "Single subject"}
                       </span>
-                      {s.requiresProductKey && (
+                      {s.requiresProductKey && !hasSubmitted && (
                         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Product key required</span>
                       )}
                       <span className="text-xs text-muted-foreground">{label}</span>
@@ -253,11 +279,16 @@ function ExamsList({ sessions, attemptsBySession, queryError }: { sessions: Exam
                       <div className="text-sm text-muted-foreground">
                         {subjects.join(" • ")} · {formatDurationFromMs(s.durationMinutes * 60_000)} · {s.startAt.toDate().toLocaleString()}
                       </div>
+                      {hasSubmitted && attempt?.totalPossible != null && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Score: <span className="font-mono text-foreground">{attempt.score}/{attempt.totalPossible}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <Button variant={status === "live" ? "default" : "outline"} className="sm:self-center">
-                    {status === "corrections_open" ? "View corrections" : status === "live" ? "Enter exam" : status === "scheduled" ? "Open details" : "View summary"}
+                  <Button variant={hasSubmitted ? "outline" : status === "live" ? "default" : "outline"} className="sm:self-center">
+                    {cta}
                   </Button>
                 </div>
               </Link>
