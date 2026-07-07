@@ -23,6 +23,7 @@ function StudentHome() {
   if (profile && profile.role !== "student") return <Navigate to="/admin" />;
 
   const [sessions, setSessions] = useState<ExamSession[]>([]);
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [queryError, setQueryError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,6 +41,20 @@ function StudentHome() {
       },
     );
   }, [profile?.subjects]);
+
+  useEffect(() => {
+    if (!profile?.uid) return;
+    const q = query(collection(getDb(), "attempts"), where("uid", "==", profile.uid));
+    return onSnapshot(q, (snap) => {
+      setAttempts(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+    }, () => setAttempts([]));
+  }, [profile?.uid]);
+
+  const attemptsBySession = useMemo(() => {
+    const m = new Map<string, Attempt>();
+    for (const a of attempts) m.set(a.sessionId, a);
+    return m;
+  }, [attempts]);
 
   const visibleSessions = useMemo(
     () => sessions.filter((session) => sessionMatchesStudent(session, profile?.subjects ?? [], profile?.department)),
