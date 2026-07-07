@@ -54,19 +54,23 @@ function ExamsPage() {
         {sessions.map((s) => {
           const status = computeStatus(s);
           const subjects = getSessionSubjects(s).join(" + ") || "—";
+          const correctionsLive = s.status === "corrections_open";
           return (
-            <Link
+            <div
               key={s.id}
-              to="/admin/exams/$sessionId"
-              params={{ sessionId: s.id }}
-              className="block rounded-lg border p-4 hover:bg-accent transition-colors"
+              className="rounded-lg border p-4 hover:bg-accent/50 transition-colors"
             >
               <div className="flex justify-between gap-3">
-                <div>
+                <Link
+                  to="/admin/exams/$sessionId"
+                  params={{ sessionId: s.id }}
+                  className="flex-1 min-w-0"
+                >
                   <div className="font-semibold flex items-center gap-2">
                     {s.title}
                     {s.mode === "combo" && <span className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full">Combo</span>}
                     {s.requiresProductKey && <span className="text-[10px] uppercase tracking-wider bg-secondary/15 text-secondary px-2 py-0.5 rounded-full">Key</span>}
+                    {correctionsLive && <span className="text-[10px] uppercase tracking-wider bg-green-500/15 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">Corrections live</span>}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     {subjects} · {s.questionIds.length} questions · {s.durationMinutes} min
@@ -74,10 +78,20 @@ function ExamsPage() {
                   <div className="text-xs text-muted-foreground mt-1">
                     Starts {s.startAt.toDate().toLocaleString()}
                   </div>
-                </div>
+                </Link>
                 <StatusPill status={status} />
               </div>
-            </Link>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link to="/admin/exams/$sessionId" params={{ sessionId: s.id }}>Manage</Link>
+                </Button>
+                <Button asChild size="sm" variant={correctionsLive ? "default" : "secondary"}>
+                  <Link to="/admin/exams/$sessionId/corrections" params={{ sessionId: s.id }}>
+                    {correctionsLive ? "Corrections (live)" : "Open corrections"}
+                  </Link>
+                </Button>
+              </div>
+            </div>
           );
         })}
       </div>
