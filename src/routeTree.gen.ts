@@ -31,6 +31,7 @@ import { Route as AuthenticatedAdminDepartmentsRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAnnouncementsRouteImport } from './routes/_authenticated/admin/announcements'
 import { Route as AuthenticatedStudentExamSessionIdRouteImport } from './routes/_authenticated/student/exam.$sessionId'
 import { Route as AuthenticatedAdminExamsSessionIdRouteImport } from './routes/_authenticated/admin/exams.$sessionId'
+import { Route as AuthenticatedStudentExamSessionIdSubmittedRouteImport } from './routes/_authenticated/student/exam.$sessionId.submitted'
 import { Route as AuthenticatedStudentExamSessionIdResultRouteImport } from './routes/_authenticated/student/exam.$sessionId.result'
 import { Route as AuthenticatedStudentExamSessionIdCorrectionsRouteImport } from './routes/_authenticated/student/exam.$sessionId.corrections'
 import { Route as AuthenticatedAdminExamsSessionIdQuestionsRouteImport } from './routes/_authenticated/admin/exams.$sessionId.questions'
@@ -155,6 +156,12 @@ const AuthenticatedAdminExamsSessionIdRoute =
     path: '/$sessionId',
     getParentRoute: () => AuthenticatedAdminExamsRoute,
   } as any)
+const AuthenticatedStudentExamSessionIdSubmittedRoute =
+  AuthenticatedStudentExamSessionIdSubmittedRouteImport.update({
+    id: '/submitted',
+    path: '/submitted',
+    getParentRoute: () => AuthenticatedStudentExamSessionIdRoute,
+  } as any)
 const AuthenticatedStudentExamSessionIdResultRoute =
   AuthenticatedStudentExamSessionIdResultRouteImport.update({
     id: '/result',
@@ -212,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/admin/exams/$sessionId/questions': typeof AuthenticatedAdminExamsSessionIdQuestionsRoute
   '/student/exam/$sessionId/corrections': typeof AuthenticatedStudentExamSessionIdCorrectionsRoute
   '/student/exam/$sessionId/result': typeof AuthenticatedStudentExamSessionIdResultRoute
+  '/student/exam/$sessionId/submitted': typeof AuthenticatedStudentExamSessionIdSubmittedRoute
   '/admin/exams/$sessionId/attempts/$uid': typeof AuthenticatedAdminExamsSessionIdAttemptsUidRoute
 }
 export interface FileRoutesByTo {
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/admin/exams/$sessionId/questions': typeof AuthenticatedAdminExamsSessionIdQuestionsRoute
   '/student/exam/$sessionId/corrections': typeof AuthenticatedStudentExamSessionIdCorrectionsRoute
   '/student/exam/$sessionId/result': typeof AuthenticatedStudentExamSessionIdResultRoute
+  '/student/exam/$sessionId/submitted': typeof AuthenticatedStudentExamSessionIdSubmittedRoute
   '/admin/exams/$sessionId/attempts/$uid': typeof AuthenticatedAdminExamsSessionIdAttemptsUidRoute
 }
 export interface FileRoutesById {
@@ -270,6 +279,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/exams/$sessionId/questions': typeof AuthenticatedAdminExamsSessionIdQuestionsRoute
   '/_authenticated/student/exam/$sessionId/corrections': typeof AuthenticatedStudentExamSessionIdCorrectionsRoute
   '/_authenticated/student/exam/$sessionId/result': typeof AuthenticatedStudentExamSessionIdResultRoute
+  '/_authenticated/student/exam/$sessionId/submitted': typeof AuthenticatedStudentExamSessionIdSubmittedRoute
   '/_authenticated/admin/exams/$sessionId/attempts/$uid': typeof AuthenticatedAdminExamsSessionIdAttemptsUidRoute
 }
 export interface FileRouteTypes {
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin/exams/$sessionId/questions'
     | '/student/exam/$sessionId/corrections'
     | '/student/exam/$sessionId/result'
+    | '/student/exam/$sessionId/submitted'
     | '/admin/exams/$sessionId/attempts/$uid'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/exams/$sessionId/questions'
     | '/student/exam/$sessionId/corrections'
     | '/student/exam/$sessionId/result'
+    | '/student/exam/$sessionId/submitted'
     | '/admin/exams/$sessionId/attempts/$uid'
   id:
     | '__root__'
@@ -357,6 +369,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/exams/$sessionId/questions'
     | '/_authenticated/student/exam/$sessionId/corrections'
     | '/_authenticated/student/exam/$sessionId/result'
+    | '/_authenticated/student/exam/$sessionId/submitted'
     | '/_authenticated/admin/exams/$sessionId/attempts/$uid'
   fileRoutesById: FileRoutesById
 }
@@ -527,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminExamsSessionIdRouteImport
       parentRoute: typeof AuthenticatedAdminExamsRoute
     }
+    '/_authenticated/student/exam/$sessionId/submitted': {
+      id: '/_authenticated/student/exam/$sessionId/submitted'
+      path: '/submitted'
+      fullPath: '/student/exam/$sessionId/submitted'
+      preLoaderRoute: typeof AuthenticatedStudentExamSessionIdSubmittedRouteImport
+      parentRoute: typeof AuthenticatedStudentExamSessionIdRoute
+    }
     '/_authenticated/student/exam/$sessionId/result': {
       id: '/_authenticated/student/exam/$sessionId/result'
       path: '/result'
@@ -604,6 +624,7 @@ const AuthenticatedAdminExamsRouteWithChildren =
 interface AuthenticatedStudentExamSessionIdRouteChildren {
   AuthenticatedStudentExamSessionIdCorrectionsRoute: typeof AuthenticatedStudentExamSessionIdCorrectionsRoute
   AuthenticatedStudentExamSessionIdResultRoute: typeof AuthenticatedStudentExamSessionIdResultRoute
+  AuthenticatedStudentExamSessionIdSubmittedRoute: typeof AuthenticatedStudentExamSessionIdSubmittedRoute
 }
 
 const AuthenticatedStudentExamSessionIdRouteChildren: AuthenticatedStudentExamSessionIdRouteChildren =
@@ -612,6 +633,8 @@ const AuthenticatedStudentExamSessionIdRouteChildren: AuthenticatedStudentExamSe
       AuthenticatedStudentExamSessionIdCorrectionsRoute,
     AuthenticatedStudentExamSessionIdResultRoute:
       AuthenticatedStudentExamSessionIdResultRoute,
+    AuthenticatedStudentExamSessionIdSubmittedRoute:
+      AuthenticatedStudentExamSessionIdSubmittedRoute,
   }
 
 const AuthenticatedStudentExamSessionIdRouteWithChildren =
@@ -670,13 +693,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
