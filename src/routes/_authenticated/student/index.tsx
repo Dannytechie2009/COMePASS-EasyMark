@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -8,10 +8,11 @@ import {
   formatDurationFromMs,
   getSessionSubjects,
   sessionMatchesStudent,
+  type Attempt,
   type ExamSession,
 } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
-import { BookOpen, CalendarClock, Clock3, KeyRound, Sparkles } from "lucide-react";
+import { BookOpen, CalendarClock, CheckCircle2, Clock3, KeyRound, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/")({
   component: StudentHome,
