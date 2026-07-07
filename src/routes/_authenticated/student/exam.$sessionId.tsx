@@ -191,7 +191,7 @@ function TakeExam() {
         breakdown,
       });
       toast.success(auto ? "Time up — submitted automatically" : "Submitted");
-      nav({ to: "/student/exam/$sessionId/result", params: { sessionId } });
+      nav({ to: "/student/exam/$sessionId/submitted", params: { sessionId } });
     } catch (e: any) {
       toast.error(e.message);
       submittingRef.current = false;

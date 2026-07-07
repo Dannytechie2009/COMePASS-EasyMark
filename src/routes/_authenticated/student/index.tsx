@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { getDb } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -8,10 +8,11 @@ import {
   formatDurationFromMs,
   getSessionSubjects,
   sessionMatchesStudent,
+  type Attempt,
   type ExamSession,
 } from "@/lib/exams";
 import { Button } from "@/components/ui/button";
-import { BookOpen, CalendarClock, Clock3, KeyRound, Sparkles } from "lucide-react";
+import { BookOpen, CalendarClock, CheckCircle2, Clock3, KeyRound, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/")({
   component: StudentHome,
@@ -22,6 +23,7 @@ function StudentHome() {
   if (profile && profile.role !== "student") return <Navigate to="/admin" />;
 
   const [sessions, setSessions] = useState<ExamSession[]>([]);
+  const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [queryError, setQueryError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,6 +41,20 @@ function StudentHome() {
       },
     );
   }, [profile?.subjects]);
+
+  useEffect(() => {
+    if (!profile?.uid) return;
+    const q = query(collection(getDb(), "attempts"), where("uid", "==", profile.uid));
+    return onSnapshot(q, (snap) => {
+      setAttempts(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+    }, () => setAttempts([]));
+  }, [profile?.uid]);
+
+  const attemptsBySession = useMemo(() => {
+    const m = new Map<string, Attempt>();
+    for (const a of attempts) m.set(a.sessionId, a);
+    return m;
+  }, [attempts]);
 
   const visibleSessions = useMemo(
     () => sessions.filter((session) => sessionMatchesStudent(session, profile?.subjects ?? [], profile?.department)),
@@ -104,7 +120,7 @@ function StudentHome() {
         </div>
       </section>
 
-      <ExamsList sessions={visibleSessions} queryError={queryError} />
+      <ExamsList sessions={visibleSessions} attemptsBySession={attemptsBySession} queryError={queryError} />
     </div>
   );
 }
@@ -119,7 +135,7 @@ function saveHidden(s: Set<string>) {
   try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(s))); } catch { /* ignore */ }
 }
 
-function ExamsList({ sessions, queryError }: { sessions: ExamSession[]; queryError: string | null }) {
+function ExamsList({ sessions, attemptsBySession, queryError }: { sessions: ExamSession[]; attemptsBySession: Map<string, Attempt>; queryError: string | null }) {
   const [hidden, setHidden] = useState<Set<string>>(() => loadHidden());
   const [filter, setFilter] = useState<"all" | "live" | "upcoming" | "recent" | "corrections">("all");
 
@@ -209,9 +225,27 @@ function ExamsList({ sessions, queryError }: { sessions: ExamSession[]; queryErr
 
       <div className="grid gap-4">
         {filtered.map(({ s, status, startMs, endMs, bucket }) => {
-          const target = status === "corrections_open" ? "/student/exam/$sessionId/result" : "/student/exam/$sessionId";
+          const attempt = attemptsBySession.get(s.id);
+          const hasSubmitted = !!attempt?.submitted;
+          const inProgress = !!attempt && !attempt.submitted;
+          const target = hasSubmitted
+            ? "/student/exam/$sessionId/result"
+            : status === "corrections_open"
+              ? "/student/exam/$sessionId/result"
+              : "/student/exam/$sessionId";
           const subjects = getSessionSubjects(s);
           const label = describeWhen({ status, startMs, endMs, now });
+          const cta = hasSubmitted
+            ? (status === "corrections_open" ? "View corrections" : "View your result")
+            : inProgress
+              ? "Resume exam"
+              : status === "corrections_open"
+                ? "View corrections"
+                : status === "live"
+                  ? "Enter exam"
+                  : status === "scheduled"
+                    ? "Open details"
+                    : "View summary";
           return (
             <div key={s.id} className="group relative rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
               <Link
@@ -223,10 +257,18 @@ function ExamsList({ sessions, queryError }: { sessions: ExamSession[]; queryErr
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusPill status={status} />
+                      {hasSubmitted && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400">
+                          <CheckCircle2 className="size-3" /> You submitted
+                        </span>
+                      )}
+                      {inProgress && (
+                        <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400">In progress</span>
+                      )}
                       <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
                         {s.mode === "combo" ? "Combo exam" : "Single subject"}
                       </span>
-                      {s.requiresProductKey && (
+                      {s.requiresProductKey && !hasSubmitted && (
                         <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">Product key required</span>
                       )}
                       <span className="text-xs text-muted-foreground">{label}</span>
@@ -237,11 +279,16 @@ function ExamsList({ sessions, queryError }: { sessions: ExamSession[]; queryErr
                       <div className="text-sm text-muted-foreground">
                         {subjects.join(" • ")} · {formatDurationFromMs(s.durationMinutes * 60_000)} · {s.startAt.toDate().toLocaleString()}
                       </div>
+                      {hasSubmitted && attempt?.totalPossible != null && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Score: <span className="font-mono text-foreground">{attempt.score}/{attempt.totalPossible}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <Button variant={status === "live" ? "default" : "outline"} className="sm:self-center">
-                    {status === "corrections_open" ? "View corrections" : status === "live" ? "Enter exam" : status === "scheduled" ? "Open details" : "View summary"}
+                  <Button variant={hasSubmitted ? "outline" : status === "live" ? "default" : "outline"} className="sm:self-center">
+                    {cta}
                   </Button>
                 </div>
               </Link>
