@@ -135,7 +135,7 @@ function saveHidden(s: Set<string>) {
   try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(s))); } catch { /* ignore */ }
 }
 
-function ExamsList({ sessions, queryError }: { sessions: ExamSession[]; queryError: string | null }) {
+function ExamsList({ sessions, attemptsBySession, queryError }: { sessions: ExamSession[]; attemptsBySession: Map<string, Attempt>; queryError: string | null }) {
   const [hidden, setHidden] = useState<Set<string>>(() => loadHidden());
   const [filter, setFilter] = useState<"all" | "live" | "upcoming" | "recent" | "corrections">("all");
 
