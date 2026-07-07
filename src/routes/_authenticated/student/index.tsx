@@ -120,7 +120,7 @@ function StudentHome() {
         </div>
       </section>
 
-      <ExamsList sessions={visibleSessions} queryError={queryError} />
+      <ExamsList sessions={visibleSessions} attemptsBySession={attemptsBySession} queryError={queryError} />
     </div>
   );
 }
